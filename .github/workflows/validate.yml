@@ -31,5 +31,5 @@ jobs:
 
       - name: Validate skills against the Agent Skills spec
         run: |
-          pip install skills-ref
-          for s in plugins/*/skills/*/; do skills-ref validate "$s"; done
+          pip install skills-ref==0.1.1
+          for s in plugins/*/skills/*/; do agentskills validate "$s"; done
