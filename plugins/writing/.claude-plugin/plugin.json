@@ -1,0 +1,13 @@
+{
+  "name": "writing",
+  "version": "1.0.0",
+  "description": "Draft merge and pull request titles and descriptions",
+  "author": {
+    "name": "Labs64 GmbH",
+    "url": "https://www.labs64.com"
+  },
+  "homepage": "https://github.com/Labs64/agent-toolkit",
+  "repository": "https://github.com/Labs64/agent-toolkit",
+  "license": "Apache-2.0",
+  "keywords": ["pull-request", "merge-request", "writing"]
+}

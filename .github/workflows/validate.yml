@@ -1,0 +1,35 @@
+name: validate
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for internal names
+        run: scripts/check-public.sh
+        env:
+          CHECK_PUBLIC_EXTRA: ${{ secrets.CHECK_PUBLIC_EXTRA }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate Claude Code manifests
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          claude plugin validate .
+          for p in plugins/*/; do claude plugin validate "$p"; done
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate skills against the Agent Skills spec
+        run: |
+          pip install skills-ref
+          for s in plugins/*/skills/*/; do skills-ref validate "$s"; done

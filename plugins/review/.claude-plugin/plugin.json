@@ -1,0 +1,13 @@
+{
+  "name": "review",
+  "version": "1.0.0",
+  "description": "Track a branch review and its fixes across rounds",
+  "author": {
+    "name": "Labs64 GmbH",
+    "url": "https://www.labs64.com"
+  },
+  "homepage": "https://github.com/Labs64/agent-toolkit",
+  "repository": "https://github.com/Labs64/agent-toolkit",
+  "license": "Apache-2.0",
+  "keywords": ["code-review", "pull-request", "merge-request"]
+}

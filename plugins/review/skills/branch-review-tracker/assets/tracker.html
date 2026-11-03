@@ -1,0 +1,365 @@
+<title>__TITLE__</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: one narrow column of issue rows, status chip at the left edge of each row. */
+  :root {
+    --bg: #f6f7f9; --surface: #ffffff; --fg: #1b2230; --muted: #5d6676; --line: #dde1e8;
+    --open: #b4232c; --open-bg: #fbe9ea; --prog: #93600a; --prog-bg: #fbf1dc;
+    --fixed: #1f7a4a; --fixed-bg: #e3f3ea; --idle: #6b7280; --idle-bg: #eceef1;
+    --sans: "IBM Plex Sans", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #12161d; --surface: #1a2029; --fg: #e4e8ee; --muted: #98a1b0; --line: #2b3340;
+    --open: #f2858b; --open-bg: #3a1d21; --prog: #e7b660; --prog-bg: #36290f;
+    --fixed: #6fd19c; --fixed-bg: #15301f; --idle: #9aa1ab; --idle-bg: #262c35; color-scheme: dark } }
+  :root[data-theme="dark"] {
+    --bg: #12161d; --surface: #1a2029; --fg: #e4e8ee; --muted: #98a1b0; --line: #2b3340;
+    --open: #f2858b; --open-bg: #3a1d21; --prog: #e7b660; --prog-bg: #36290f;
+    --fixed: #6fd19c; --fixed-bg: #15301f; --idle: #9aa1ab; --idle-bg: #262c35; color-scheme: dark }
+  body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 15px; line-height: 1.45;
+    padding-block: 28px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  main { max-width: 780px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+  header { display: flex; flex-direction: column; gap: 4px; }
+  h1 { font-size: 20px; font-weight: 600; margin: 0; text-wrap: balance; }
+  .meta { font-family: var(--mono); font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
+  .summary { display: flex; flex-wrap: wrap; gap: 8px; }
+  ol { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+  li { display: grid; grid-template-columns: 2.2em 6.5em 1fr auto; gap: 4px 10px; padding: 12px 14px; border-top: 1px solid var(--line); align-items: baseline; }
+  li:first-child { border-top: 0; }
+  li.done .title, li.done .num { color: var(--muted); }
+  .num { font-family: var(--mono); font-weight: 500; font-variant-numeric: tabular-nums; text-align: right; }
+  .body { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+  .title { font-weight: 500; }
+  .where { font-family: var(--mono); font-size: 12.5px; color: var(--muted); overflow-wrap: anywhere; }
+  .note { font-size: 13.5px; color: var(--muted); }
+  .chip { font-size: 12px; font-weight: 600; letter-spacing: .02em; padding: 1px 8px; border-radius: 999px; white-space: nowrap; justify-self: start; }
+  .s-open { color: var(--open); background: var(--open-bg); }
+  .s-in-progress, .s-partial { color: var(--prog); background: var(--prog-bg); }
+  .s-fixed { color: var(--fixed); background: var(--fixed-bg); }
+  .s-wontfix, .s-dismissed { color: var(--idle); background: var(--idle-bg); }
+  .tag { font-size: 11.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; margin-left: 8px; }
+  .tag.blocker { color: var(--open); }
+  .tag.minor { color: var(--muted); }
+  .err { color: var(--open); }
+  .closed { margin-top: 8px; padding: 10px 12px; border-radius: 8px; background: var(--fixed-bg); color: var(--fg); font-size: 14px; max-width: 70ch; }
+  .closed strong { color: var(--fixed); font-weight: 600; }
+  .more { font: inherit; font-size: 13px; font-weight: 500; color: var(--fg); background: transparent;
+    border: 1px solid var(--line); border-radius: 6px; padding: 3px 10px; cursor: pointer; align-self: start; white-space: nowrap; }
+  .more:hover { background: var(--bg); }
+  .more:focus-visible, .close:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+  dialog { width: min(680px, calc(100vw - 32px)); max-height: calc(100vh - 64px); padding: 0; border: 1px solid var(--line);
+    border-radius: 10px; background: var(--surface); color: var(--fg); }
+  dialog::backdrop { background: rgba(10, 14, 20, .45); }
+  .dlg { display: flex; flex-direction: column; gap: 16px; padding: 20px; }
+  .dlg-head { display: flex; gap: 12px; align-items: flex-start; }
+  .dlg-head h2 { flex: 1; min-width: 0; margin: 0; font-size: 17px; font-weight: 600; text-wrap: balance; }
+  .close { font: inherit; font-size: 18px; line-height: 1; color: var(--muted); background: transparent; border: 0; padding: 4px 6px; cursor: pointer; border-radius: 6px; }
+  .label { font-size: 11.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .commit { font-family: var(--mono); font-size: 13px; overflow-wrap: anywhere; }
+  .commit b { font-weight: 500; }
+  .locs { list-style: none; margin: 0; padding: 0; border: 0; border-radius: 0; background: none; display: flex; flex-direction: column; gap: 8px; }
+  .locs li { display: flex; flex-direction: column; gap: 2px; padding: 0; border: 0; }
+  .loc { font-family: var(--mono); font-size: 12.5px; overflow-wrap: anywhere; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+  .copy { font: inherit; font-family: var(--sans); font-size: 11.5px; color: var(--muted); background: transparent; border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; cursor: pointer; }
+  .what { font-size: 13.5px; color: var(--muted); }
+  .text p { margin: 0 0 8px; max-width: 65ch; }
+  .text p:last-child { margin-bottom: 0; }
+  .facts { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; font-size: 14px; max-width: 65ch; }
+  .facts dt { font-size: 12px; font-weight: 600; color: var(--muted); padding-top: 2px; }
+  .facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+  .refs { margin: 0; padding-left: 18px; font-size: 14px; border: 0; border-radius: 0; background: none; }
+  .refs li { display: list-item; padding: 0; border: 0; }
+  .refs a { color: var(--fg); }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 6px; }
+  .btn { font: inherit; font-size: 13.5px; font-weight: 600; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--fg); background: var(--fg); color: var(--surface); cursor: pointer; }
+  .btn.ghost { background: transparent; color: var(--fg); }
+  .actions { align-items: center; }
+  .resume-wrap { position: relative; display: inline-block; }
+  .tip { position: absolute; top: calc(100% + 6px); left: 0; z-index: 5; width: max-content; max-width: min(560px, calc(100vw - 32px));
+    padding: 8px 10px; border-radius: 6px; background: var(--fg); color: var(--surface); font-family: var(--mono); font-size: 12.5px;
+    line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; box-shadow: 0 4px 14px rgba(0, 0, 0, .18);
+    opacity: 0; visibility: hidden; pointer-events: none; }
+  .tip::before { content: "Click the button to copy:"; display: block; font-family: var(--sans); font-size: 11.5px; font-weight: 600; opacity: .75; margin-bottom: 4px; }
+  /* Shown on hover and on keyboard focus only: a click also focuses the button, and
+     :focus-within would keep the hint open after it. */
+  .resume-wrap:hover .tip, .btn:focus-visible + .tip { opacity: 1; visibility: visible; }
+  .resume-wrap.tip-off .tip { opacity: 0; visibility: hidden; transition: none; }
+  @media (prefers-reduced-motion: no-preference) { .tip { transition: opacity .12s ease .15s, visibility 0s linear .15s; } }
+  .resume-status { color: var(--muted); font-size: 13px; }
+  .btn:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
+  h2.sec { font-size: 15px; font-weight: 600; margin: 8px 0 0; }
+  .sec-meta { font-family: var(--mono); font-size: 12px; color: var(--muted); font-weight: 400; margin-left: 8px; }
+  .waiting { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+  .waiting li { display: grid; grid-template-columns: 7.5em 1fr; gap: 4px 10px; padding: 10px 14px; border-top: 1px solid var(--line); align-items: baseline; font-size: 14px; }
+  .waiting li:first-child { border-top: 0; }
+  .waiting .kind { font-size: 11.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--prog); }
+  .waiting .ref { font-family: var(--mono); font-size: 12.5px; color: var(--muted); margin-left: 6px; }
+  .log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; border: 0; background: none; }
+  .log li { display: grid; grid-template-columns: 9.5em 1fr; gap: 10px; padding: 0; border: 0; font-size: 14px; }
+  .log time { font-family: var(--mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; padding-top: 2px; }
+  .dlg textarea { width: 100%; box-sizing: border-box; font-family: var(--mono); font-size: 13px; line-height: 1.45; padding: 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); resize: vertical; }
+  .dlg-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-end; }
+  .dlg-status { margin-right: auto; color: var(--muted); font-size: 13px; }
+  @media (max-width: 480px) { li { grid-template-columns: 2em 1fr auto; } li .body { grid-column: 1 / -1; } .log li, .waiting li { grid-template-columns: 1fr; gap: 0; } }
+</style>
+<main>
+  <header>
+    <h1 id="title">__TITLE__</h1>
+    <div class="meta" id="meta">Loading the issue list…</div>
+    <div class="closed" id="closed" hidden></div>
+    <div class="actions">
+      <span class="resume-wrap">
+        <button type="button" class="btn" id="resume-open" aria-describedby="resume-tip">Resume in a new session</button>
+        <span class="tip" id="resume-tip" role="tooltip"></span>
+      </span>
+      <span class="resume-status" id="resume-status" role="status"></span>
+    </div>
+  </header>
+  <div class="summary" id="summary"></div>
+  <ol id="list"></ol>
+  <section id="waiting-sec" hidden>
+    <h2 class="sec">Waiting on you<span class="sec-meta" id="waiting-updated"></span></h2>
+    <ul class="waiting" id="waiting"></ul>
+  </section>
+  <section>
+    <h2 class="sec">Session log</h2>
+    <ul class="log" id="log"></ul>
+  </section>
+</main>
+<dialog id="dlg" aria-labelledby="dlg-title"></dialog>
+<script>
+  const STATUS = ["open", "in progress", "partial", "fixed", "dismissed", "wontfix"];
+  const isDone = s => s === "fixed" || s === "wontfix" || s === "dismissed";
+  const when = t => (t || "").replace("T", " ").slice(0, 16) + (t ? " UTC" : "");
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const chip = s => el("span", "chip s-" + s.replace(" ", "-"), s);
+
+  fetch("issues.json", { cache: "no-store" }).then(r => r.json()).then(review => {
+    if (review.title) document.getElementById("title").textContent = review.title;
+    document.getElementById("meta").textContent =
+      review.branch + (review.reviewed ? " @ " + review.reviewed : "") +
+      (review.base ? " against " + review.base : "") +
+      (review.ticket ? " \u00b7 " + review.ticket : "");
+    if (review.closed) {
+      const c = document.getElementById("closed");
+      c.append(el("strong", null, "Review closed " + review.closed.date),
+        document.createTextNode(" at " + review.closed.at + " (" + (review.base || "base") + " " + review.closed.base + "). " + review.closed.summary));
+      c.hidden = false;
+    }
+    const summary = document.getElementById("summary");
+    for (const s of STATUS) {
+      const n = review.issues.filter(i => i.status === s).length;
+      if (n) { const c = chip(s); c.textContent = n + " " + s; summary.append(c); }
+    }
+    const list = document.getElementById("list");
+    for (const i of review.issues) {
+      const li = el("li", isDone(i.status) ? "done" : "");
+      li.append(el("span", "num", i.n + "."), chip(i.status));
+      const body = el("div", "body");
+      const title = el("div", "title", i.title);
+      if (i.blocker && !isDone(i.status)) title.append(el("span", "tag blocker", "before merge"));
+      if (i.minor) title.append(el("span", "tag minor", "minor"));
+      body.append(title);
+      if (i.where) body.append(el("div", "where", i.where));
+      if (i.note) body.append(el("div", "note", i.note));
+      li.append(body);
+      const more = el("button", "more", "Details");
+      more.type = "button";
+      more.setAttribute("aria-haspopup", "dialog");
+      more.addEventListener("click", () => openDetails(i, review.commits || {}));
+      li.append(more);
+      list.append(li);
+    }
+    const log = document.getElementById("log");
+    for (const entry of [...(review.log || [])].reverse()) {
+      const row = el("li");
+      const t = el("time", null, when(entry.at));
+      t.dateTime = entry.at || "";
+      row.append(t, el("span", null, entry.text || ""));
+      log.append(row);
+    }
+  }).catch(e => {
+    console.error(e);
+    document.getElementById("meta").replaceChildren(el("span", "err", "Could not load the issue list: " + e.message));
+  });
+
+  const dlg = document.getElementById("dlg");
+  dlg.addEventListener("click", e => { if (e.target === dlg) dlg.close(); });
+
+  function openDetails(i, commits) {
+    const box = el("div", "dlg");
+    const head = el("div", "dlg-head");
+    const h = el("h2", null, i.n + ". " + i.title);
+    h.id = "dlg-title";
+    const close = el("button", "close", "\u00d7");
+    close.type = "button";
+    close.setAttribute("aria-label", "Close");
+    close.addEventListener("click", () => dlg.close());
+    head.append(h, chip(i.status), close);
+    box.append(head);
+
+    if (i.commit) {
+      const sec = el("section");
+      sec.append(el("div", "label", i.commitRole || "Commit"));
+      const c = el("div", "commit");
+      c.append(el("b", null, i.commit));
+      if (commits[i.commit]) c.append(document.createTextNode("  " + commits[i.commit]));
+      sec.append(c);
+      box.append(sec);
+    }
+    if (i.locations && i.locations.length) {
+      const sec = el("section");
+      sec.append(el("div", "label", "Where to look"));
+      const ul = el("ul", "locs");
+      for (const l of i.locations) {
+        const li = el("li");
+        const ref = l.path + ":" + l.line;
+        const loc = el("div", "loc");
+        loc.append(el("span", null, ref));
+        const cp = el("button", "copy", "Copy");
+        cp.type = "button";
+        cp.addEventListener("click", () => {
+          navigator.clipboard.writeText(ref).then(() => { cp.textContent = "Copied"; },
+            () => { const r = document.createRange(); r.selectNodeContents(loc.firstChild);
+                    const s = getSelection(); s.removeAllRanges(); s.addRange(r); });
+        });
+        loc.append(cp);
+        li.append(loc);
+        if (l.what) li.append(el("div", "what", l.what));
+        ul.append(li);
+      }
+      sec.append(ul);
+      box.append(sec);
+    }
+    if (i.detail && i.detail.length) {
+      const sec = el("section");
+      sec.append(el("div", "label", "Details"));
+      const t = el("div", "text");
+      for (const p of i.detail) t.append(el("p", null, p));
+      sec.append(t);
+      box.append(sec);
+    }
+    const facts = (label, rows) => {
+      const sec = el("section");
+      sec.append(el("div", "label", label));
+      const dl = el("dl", "facts");
+      for (const [k, v] of rows) if (v) dl.append(el("dt", null, k), el("dd", null, v));
+      sec.append(dl);
+      box.append(sec);
+    };
+    if (i.fix) facts("The fix", [["What it does", i.fix.what], ["Behavior now", i.fix.behavior]]);
+    if (i.dismissal) facts(i.status === "wontfix" ? "Won't fix" : "Dismissed",
+      [["By", i.dismissal.by], ["When", when(i.dismissal.at)], ["Why", i.dismissal.reason]]);
+    if (i.verified) {
+      const sec = el("section");
+      const t = el("div", "text");
+      t.append(el("p", null, i.verified));
+      sec.append(el("div", "label", "Verified"), t);
+      box.append(sec);
+    }
+    const refList = (label, items, text) => {
+      if (!items || !items.length) return;
+      const sec = el("section");
+      sec.append(el("div", "label", label));
+      const ul = el("ul", "refs");
+      for (const it of items) {
+        const li = el("li");
+        if (it.url) { const a = el("a", null, text(it)); a.href = it.url; a.target = "_blank"; a.rel = "noopener"; li.append(a); }
+        else li.textContent = text(it);
+        ul.append(li);
+      }
+      sec.append(ul);
+      box.append(sec);
+    };
+    refList("Posted", i.posted, p => (p.where || "Posted") + ", " + when(p.at));
+    refList("Follow-up", i.followUp, f => f.ticket + (f.summary ? ": " + f.summary : ""));
+    dlg.replaceChildren(box);
+    dlg.showModal();
+    close.focus();
+  }
+
+  // context.json is written for the agent that resumes the review. The page shows only
+  // what waits on the user, and the prompt behind the resume button.
+  let resumePrompt = "";
+  const resumeText = () => resumePrompt ||
+    "Resume the review in \"" + document.title + "\" with the branch-review-tracker skill. I will give you the tracker's claude.ai link.";
+  const showTip = () => { document.getElementById("resume-tip").textContent = resumeText(); };
+  showTip();
+  fetch("context.json", { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(ctx => {
+    if (!ctx) return;
+    resumePrompt = ctx.resumePrompt || "";
+    showTip();
+    const items = ctx.waiting || [];
+    if (!items.length) return;
+    document.getElementById("waiting-updated").textContent = ctx.updatedAt ? "updated " + when(ctx.updatedAt) : "";
+    const ul = document.getElementById("waiting");
+    for (const w of items) {
+      const li = el("li");
+      const text = el("span", null, w.text || "");
+      if (w.issues && w.issues.length) text.append(el("span", "ref", w.issues.map(n => "#" + n).join(", ")));
+      li.append(el("span", "kind", w.kind || "to do"), text);
+      ul.append(li);
+    }
+    document.getElementById("waiting-sec").hidden = false;
+  }).catch(e => console.error(e));
+
+  // A click copies the prompt. Where the clipboard is refused, a popup shows the
+  // prompt selected, ready to copy by hand.
+  const resumeButton = document.getElementById("resume-open");
+  const resumeStatus = document.getElementById("resume-status");
+  let statusTimer;
+  // After a click, the hint stays hidden until the pointer leaves the button, so it
+  // does not cover the "Copied" message.
+  const resumeWrap = resumeButton.parentElement;
+  const tipOn = () => resumeWrap.classList.remove("tip-off");
+  resumeWrap.addEventListener("mouseleave", tipOn);
+  resumeButton.addEventListener("blur", tipOn);
+  resumeButton.addEventListener("click", () => {
+    resumeWrap.classList.add("tip-off");
+    const done = () => {
+      resumeStatus.textContent = "Copied to the clipboard.";
+      clearTimeout(statusTimer);
+      statusTimer = setTimeout(() => { resumeStatus.textContent = ""; }, 3000);
+    };
+    try {
+      navigator.clipboard.writeText(resumeText()).then(done, openResumeDialog);
+    } catch (e) {
+      openResumeDialog();
+    }
+  });
+
+  function openResumeDialog() {
+    const box = el("div", "dlg");
+    const head = el("div", "dlg-head");
+    const h = el("h2", null, "Resume in a new session");
+    h.id = "dlg-title";
+    const close = el("button", "close", "×");
+    close.type = "button";
+    close.setAttribute("aria-label", "Close");
+    close.addEventListener("click", () => dlg.close());
+    head.append(h, close);
+    const hint = el("div", "what", "Paste this into a new Claude Code session in the repository. It loads this tracker's state first.");
+    const txt = el("textarea");
+    txt.readOnly = true;
+    txt.rows = 12;
+    txt.value = resumeText();
+    const actions = el("div", "dlg-actions");
+    const status = el("span", "dlg-status");
+    status.setAttribute("role", "status");
+    const copy = el("button", "btn", "Copy prompt");
+    copy.type = "button";
+    copy.addEventListener("click", () => {
+      const fallback = () => { txt.focus(); txt.select(); status.textContent = "Selected. Press Cmd+C or Ctrl+C to copy."; };
+      try { navigator.clipboard.writeText(txt.value).then(() => { status.textContent = "Copied."; }, fallback); }
+      catch (e) { fallback(); }
+    });
+    actions.append(status, copy);
+    box.append(head, hint, txt, actions);
+    dlg.replaceChildren(box);
+    dlg.showModal();
+    txt.focus();
+    txt.select();
+    status.textContent = "The clipboard is not available here. The prompt is selected; press Cmd+C or Ctrl+C.";
+  }
+</script>

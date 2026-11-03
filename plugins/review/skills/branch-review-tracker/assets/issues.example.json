@@ -1,0 +1,76 @@
+{
+  "title": "Export Scope Review",
+  "branch": "feature/PROJ-123-export-scope",
+  "base": "main",
+  "ticket": "PROJ-123",
+  "pr": { "number": 42, "url": "https://github.com/example-org/example-service/pull/42" },
+  "reviewed": "4f2c9a1b7",
+  "artifact": "https://claude.ai/artifact/EXAMPLEexampleEXAMPLE",
+  "commits": {
+    "a1b2c3d4e": "Restrict exports to the caller's own account",
+    "4f2c9a1b7": "Override the account filter after decoding"
+  },
+  "issues": [
+    {
+      "n": 1,
+      "status": "fixed",
+      "title": "Filter quoting lets a caller export another account's data",
+      "where": "ExportController restrictFilter",
+      "note": "fixed by overriding the account after decoding",
+      "commit": "a1b2c3d4e",
+      "commitRole": "Introduced and fixed in",
+      "blocker": true,
+      "locations": [
+        {
+          "path": "src/main/java/com/example/export/ExportController.java",
+          "line": 120,
+          "what": "restrictFilter: the account number is now set in the decoded map"
+        }
+      ],
+      "detail": [
+        "The string guard dropped only a filter piece equal to the key name, and an unclosed quote then swallowed the appended account, so the caller's own value won."
+      ],
+      "verified": "Reproduced at a1b2c3d4e by a controller-level test; the service layer was stubbed. The fix was confirmed by reading the code at 4f2c9a1b7.",
+      "fix": {
+        "what": "The controller decodes the filter first, then overwrites the account number in the decoded map.",
+        "behavior": "Quote tricks in the filter can no longer change the scope of the export."
+      },
+      "posted": [
+        { "at": "2026-01-10T09:40:00Z", "where": "PR comment", "url": "https://github.com/example-org/example-service/pull/42#issuecomment-1" }
+      ]
+    },
+    {
+      "n": 2,
+      "status": "dismissed",
+      "minor": true,
+      "title": "Expired keys keep working offline",
+      "where": "KeyRepository findExportKeys",
+      "commit": "4f2c9a1b7",
+      "commitRole": "Introduced in",
+      "locations": [
+        {
+          "path": "src/main/java/com/example/keys/KeyRepository.java",
+          "line": 88,
+          "what": "findExportKeys: no check of the expiration time"
+        }
+      ],
+      "detail": [
+        "The export query ignores the expiration time."
+      ],
+      "verified": "From reading the code: keys of this type are created without an expiration, and no update path exists.",
+      "dismissal": {
+        "by": "Claude, while verifying the findings at the reviewer's request; no human sign-off recorded",
+        "at": "2026-01-10T09:30:00Z",
+        "reason": "Not reachable: keys of this type cannot expire today."
+      },
+      "followUp": [
+        { "ticket": "PROJ-130", "url": "https://example.atlassian.net/browse/PROJ-130", "summary": "Support expiration for keys" }
+      ]
+    }
+  ],
+  "log": [
+    { "at": "2026-01-10T09:30:00Z", "text": "First round at a1b2c3d4e: 1 open, 1 dismissed." },
+    { "at": "2026-01-11T14:00:00Z", "text": "Round 2 at 4f2c9a1b7: #1 fixed." }
+  ],
+  "closed": null
+}

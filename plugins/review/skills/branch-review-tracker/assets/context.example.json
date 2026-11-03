@@ -1,0 +1,57 @@
+{
+  "updatedAt": "2026-01-11T14:00:00Z",
+  "reviewed": "4f2c9a1b7",
+  "artifact": "https://claude.ai/artifact/EXAMPLEexampleEXAMPLE",
+  "resumePrompt": "Resume the review of example-org/example-service PR #42 (PROJ-123) with the branch-review-tracker skill. The tracker is the claude.ai artifact https://claude.ai/artifact/EXAMPLEexampleEXAMPLE.",
+  "index": [
+    {
+      "n": 1,
+      "status": "fixed",
+      "title": "Filter quoting lets a caller export another account's data",
+      "blocker": true
+    },
+    {
+      "n": 2,
+      "status": "dismissed",
+      "title": "Expired keys keep working offline"
+    }
+  ],
+  "waiting": [
+    {
+      "kind": "decision",
+      "text": "Choose whether the strict export check stays available as an opt-in.",
+      "issues": [
+        1
+      ]
+    },
+    {
+      "kind": "to post",
+      "text": "Post the drafted PR comment for the expiration follow-up.",
+      "issues": [
+        2
+      ]
+    }
+  ],
+  "sections": [
+    {
+      "title": "Where things stand",
+      "text": "PR #42 (feature/PROJ-123-export-scope -> main) is open. Last reviewed head: 4f2c9a1b7; first reviewed: a1b2c3d4e. Nothing blocks the merge."
+    },
+    {
+      "title": "Posted and pending",
+      "text": "Posted by the reviewer: #1 as a PR comment. Drafts not posted: none. Follow-up ticket: PROJ-130 for #2."
+    },
+    {
+      "title": "Open decisions",
+      "text": "None."
+    },
+    {
+      "title": "Project notes",
+      "text": "Helpers used: build-and-test, ticket-conventions. No data-checks helper; asked the user how to check existing records. Learned: git worktree fails on encrypted paths here; export with git archive excluding them."
+    },
+    {
+      "title": "Conventions",
+      "text": "PR comments: concise, copy-paste markdown, anchored to a permalink line range. Tickets: no line numbers or commit SHAs."
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+# review
+
+## branch-review-tracker
+
+Reviews a branch or a pull/merge request, verifies every finding against the
+code, and keeps one page per review listing each issue with its status,
+evidence and `file:line`. Each later round re-reviews the branch, assesses the
+fixes and updates the page. A small `context.json` on the page lets a new
+session resume the review without the earlier conversation.
+
+Requirements:
+
+- git, and `gh` or `glab` for the pull or merge request;
+- Python 3 for `scripts/validate-issues.py`;
+- in Claude Code, the `Artifact` tool for the page; without it the skill keeps
+  the tracker files locally and gives their paths.
+
+The skill finds project helpers, such as a review checklist or a build-and-test
+guide, by their descriptions. `references/helper-skills.md` lists what each
+helper should contain.
+
+## Install
+
+    /plugin install review --marketplace Labs64/agent-toolkit

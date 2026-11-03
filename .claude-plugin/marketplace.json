@@ -1,0 +1,23 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "labs64",
+  "description": "Labs64 tools for coding agents",
+  "owner": {
+    "name": "Labs64 GmbH",
+    "url": "https://www.labs64.com"
+  },
+  "plugins": [
+    {
+      "name": "review",
+      "description": "Track a branch review and its fixes across rounds",
+      "version": "1.0.0",
+      "source": "./plugins/review"
+    },
+    {
+      "name": "writing",
+      "description": "Draft merge and pull request titles and descriptions",
+      "version": "1.0.0",
+      "source": "./plugins/writing"
+    }
+  ]
+}
