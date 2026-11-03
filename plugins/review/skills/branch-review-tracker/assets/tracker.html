@@ -17,9 +17,16 @@
     --bg: #12161d; --surface: #1a2029; --fg: #e4e8ee; --muted: #98a1b0; --line: #2b3340;
     --open: #f2858b; --open-bg: #3a1d21; --prog: #e7b660; --prog-bg: #36290f;
     --fixed: #6fd19c; --fixed-bg: #15301f; --idle: #9aa1ab; --idle-bg: #262c35; color-scheme: dark }
-  body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 15px; line-height: 1.45;
-    padding-block: 28px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-  main { max-width: 780px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+  body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 15px; line-height: 1.45; margin: 0; padding-bottom: 40px; }
+  /* Top bar spans the page; its content lines up with the column below. */
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--line);
+    padding-block: 6px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .topbar-in { max-width: 780px; margin: 0 auto; min-height: 32px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
+  .brand { display: flex; align-items: center; gap: 10px; color: var(--muted); text-decoration: none; font-size: 13px; font-weight: 600; white-space: nowrap; }
+  .brand img { display: block; height: 24px; width: auto; }
+  .brand span { padding-left: 10px; border-left: 1px solid var(--line); }
+  main { max-width: 780px; margin: 0 auto; padding-top: 20px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    display: flex; flex-direction: column; gap: 20px; }
   header { display: flex; flex-direction: column; gap: 4px; }
   h1 { font-size: 20px; font-weight: 600; margin: 0; text-wrap: balance; }
   .meta { font-family: var(--mono); font-size: 13px; color: var(--muted); overflow-wrap: anywhere; }
@@ -71,12 +78,12 @@
   .refs { margin: 0; padding-left: 18px; font-size: 14px; border: 0; border-radius: 0; background: none; }
   .refs li { display: list-item; padding: 0; border: 0; }
   .refs a { color: var(--fg); }
-  .actions { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 6px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
   .btn { font: inherit; font-size: 13.5px; font-weight: 600; padding: 5px 12px; border-radius: 6px; border: 1px solid var(--fg); background: var(--fg); color: var(--surface); cursor: pointer; }
   .btn.ghost { background: transparent; color: var(--fg); }
   .actions { align-items: center; }
   .resume-wrap { position: relative; display: inline-block; }
-  .tip { position: absolute; top: calc(100% + 6px); left: 0; z-index: 5; width: max-content; max-width: min(560px, calc(100vw - 32px));
+  .tip { position: absolute; top: calc(100% + 6px); right: 0; z-index: 5; width: max-content; max-width: min(560px, calc(100vw - 32px));
     padding: 8px 10px; border-radius: 6px; background: var(--fg); color: var(--surface); font-family: var(--mono); font-size: 12.5px;
     line-height: 1.45; white-space: pre-wrap; overflow-wrap: anywhere; box-shadow: 0 4px 14px rgba(0, 0, 0, .18);
     opacity: 0; visibility: hidden; pointer-events: none; }
@@ -86,7 +93,8 @@
   .resume-wrap:hover .tip, .btn:focus-visible + .tip { opacity: 1; visibility: visible; }
   .resume-wrap.tip-off .tip { opacity: 0; visibility: hidden; transition: none; }
   @media (prefers-reduced-motion: no-preference) { .tip { transition: opacity .12s ease .15s, visibility 0s linear .15s; } }
-  .resume-status { color: var(--muted); font-size: 13px; }
+  .resume-status { color: var(--muted); font-size: 13px; order: -1; }
+  .topbar .btn { font-size: 13px; padding: 3px 10px; }
   .btn:focus-visible { outline: 2px solid var(--fg); outline-offset: 2px; }
   h2.sec { font-size: 15px; font-weight: 600; margin: 8px 0 0; }
   .sec-meta { font-family: var(--mono); font-size: 12px; color: var(--muted); font-weight: 400; margin-left: 8px; }
@@ -103,18 +111,21 @@
   .dlg-status { margin-right: auto; color: var(--muted); font-size: 13px; }
   @media (max-width: 480px) { li { grid-template-columns: 2em 1fr auto; } li .body { grid-column: 1 / -1; } .log li, .waiting li { grid-template-columns: 1fr; gap: 0; } }
 </style>
+<div class="topbar"><div class="topbar-in">
+  <a class="brand" href="https://www.labs64.com" target="_blank" rel="noopener"><img alt="Labs64" width="96" height="24" src="data:image/png;base64,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"><span>Branch Review Tracker</span></a>
+  <div class="actions">
+    <span class="resume-wrap">
+      <button type="button" class="btn" id="resume-open" aria-describedby="resume-tip">Resume in a new session</button>
+      <span class="tip" id="resume-tip" role="tooltip"></span>
+    </span>
+    <span class="resume-status" id="resume-status" role="status"></span>
+  </div>
+</div></div>
 <main>
   <header>
     <h1 id="title">__TITLE__</h1>
     <div class="meta" id="meta">Loading the issue list…</div>
     <div class="closed" id="closed" hidden></div>
-    <div class="actions">
-      <span class="resume-wrap">
-        <button type="button" class="btn" id="resume-open" aria-describedby="resume-tip">Resume in a new session</button>
-        <span class="tip" id="resume-tip" role="tooltip"></span>
-      </span>
-      <span class="resume-status" id="resume-status" role="status"></span>
-    </div>
   </header>
   <div class="summary" id="summary"></div>
   <ol id="list"></ol>

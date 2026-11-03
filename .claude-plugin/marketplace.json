@@ -10,13 +10,13 @@
     {
       "name": "review",
       "description": "Track a branch review and its fixes across rounds",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "source": "./plugins/review"
     },
     {
       "name": "writing",
       "description": "Draft merge and pull request titles and descriptions",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "source": "./plugins/writing"
     }
   ]

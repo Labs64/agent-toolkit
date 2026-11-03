@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <title>Labs64 agent toolkit</title>
+  <!-- 128 grid: straight edges sit on multiples of 4, so 32 and 64 px renders stay sharp. -->
+  <rect width="128" height="128" fill="#8a2a0c"/>
+  <g shape-rendering="crispEdges" fill="#fff">
+    <rect x="56" width="16" height="128"/>
+    <rect x="52" y="16" width="24" height="24"/>
+    <rect x="20" y="64" width="8" height="24"/>
+    <rect x="100" y="64" width="8" height="24"/>
+  </g>
+  <rect x="56" y="20" width="16" height="16" fill="#f39200" shape-rendering="crispEdges"/>
+  <rect x="28" y="48" width="72" height="56" rx="8" fill="#fff"/>
+  <rect x="36" y="56" width="56" height="40" rx="4" fill="#f39200"/>
+  <g shape-rendering="crispEdges">
+    <rect x="44" y="60" width="16" height="16" fill="#fff"/>
+    <rect x="68" y="60" width="16" height="16" fill="#fff"/>
+    <rect x="48" y="64" width="8" height="8" fill="#8a2a0c"/>
+    <rect x="72" y="64" width="8" height="8" fill="#8a2a0c"/>
+  </g>
+  <path d="M52 84 Q64 93 76 84" fill="none" stroke="#8a2a0c" stroke-width="6" stroke-linecap="round"/>
+</svg>
