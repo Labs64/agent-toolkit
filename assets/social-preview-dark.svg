@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 640" width="1280" height="640">
+  <title>agent-toolkit: Labs64 tools for coding agents</title>
+  <rect width="1280" height="640" fill="#12161d"/>
+  <clipPath id="round"><rect x="140" y="160" width="320" height="320" rx="38"/></clipPath>
+  <svg x="140" y="160" width="320" height="320" viewBox="0 0 128 128" clip-path="url(#round)">
+
+  <rect width="128" height="128" fill="#8a2a0c"/>
+  <g shape-rendering="crispEdges" fill="#fff">
+    <rect x="56" width="16" height="128"/>
+    <rect x="52" y="16" width="24" height="24"/>
+    <rect x="20" y="64" width="8" height="24"/>
+    <rect x="100" y="64" width="8" height="24"/>
+  </g>
+  <rect x="56" y="20" width="16" height="16" fill="#f39200" shape-rendering="crispEdges"/>
+  <rect x="28" y="48" width="72" height="56" rx="8" fill="#fff"/>
+  <rect x="36" y="56" width="56" height="40" rx="4" fill="#f39200"/>
+  <g shape-rendering="crispEdges">
+    <rect x="44" y="60" width="16" height="16" fill="#fff"/>
+    <rect x="68" y="60" width="16" height="16" fill="#fff"/>
+    <rect x="48" y="64" width="8" height="8" fill="#8a2a0c"/>
+    <rect x="72" y="64" width="8" height="8" fill="#8a2a0c"/>
+  </g>
+  <path d="M52 84 Q64 93 76 84" fill="none" stroke="#8a2a0c" stroke-width="6" stroke-linecap="round"/>
+  </svg>
+  <g font-family="Avenir Next, Avenir, Helvetica Neue, Arial, sans-serif">
+    <text x="540" y="300" font-size="92" font-weight="700" fill="#e4e8ee">agent-toolkit</text>
+    <text x="544" y="368" font-size="40" font-weight="500" fill="#e4e8ee">Labs64 tools for coding agents</text>
+    <text x="544" y="430" font-size="30" font-weight="400" fill="#98a1b0">Claude Code plugins · Agent Skills</text>
+  </g>
+</svg>

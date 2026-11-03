@@ -1,6 +1,7 @@
-<img src="assets/icon.svg" alt="" width="72" align="right">
-
-# agent-toolkit
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/social-preview-dark.png">
+  <img src="assets/social-preview.png" alt="agent-toolkit: Labs64 tools for coding agents">
+</picture>
 
 Tools for coding agents from [Labs64](https://www.labs64.com).
 
