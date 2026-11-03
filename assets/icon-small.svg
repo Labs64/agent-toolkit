@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="32" height="32">
+  <title>Labs64 agent toolkit</title>
+  <!-- Cut of icon.svg for 32 px and below: plain eyes and a heavier smile. -->
+  <rect width="128" height="128" fill="#8a2a0c"/>
+  <g shape-rendering="crispEdges" fill="#fff">
+    <rect x="56" width="16" height="128"/>
+    <rect x="52" y="16" width="24" height="24"/>
+    <rect x="20" y="64" width="8" height="24"/>
+    <rect x="100" y="64" width="8" height="24"/>
+  </g>
+  <rect x="56" y="20" width="16" height="16" fill="#f39200" shape-rendering="crispEdges"/>
+  <rect x="28" y="48" width="72" height="56" rx="8" fill="#fff"/>
+  <rect x="36" y="56" width="56" height="40" rx="4" fill="#f39200"/>
+  <g shape-rendering="crispEdges" fill="#8a2a0c">
+    <rect x="44" y="60" width="12" height="12"/>
+    <rect x="72" y="60" width="12" height="12"/>
+  </g>
+  <path d="M52 82 Q64 92 76 82" fill="none" stroke="#8a2a0c" stroke-width="8" stroke-linecap="round"/>
+</svg>

@@ -13,6 +13,11 @@ Everything in this repository is public.
   `gemini-extension.json`) go next to `.claude-plugin/` in the plugin folder
   and point at the same `skills/`.
 - Hooks and MCP servers belong to the plugin that uses them.
+- `assets/icon.svg` is the toolkit icon, and `assets/icon-small.svg` its cut
+  for 32 px and below. Each plugin carries a 512 px export as `icon.png`,
+  named by `icon` in its `plugin.json`:
+
+      rsvg-convert -w 512 -h 512 assets/icon.svg -o plugins/<name>/icon.png
 
 ## Rules
 

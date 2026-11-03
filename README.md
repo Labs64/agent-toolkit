@@ -1,3 +1,5 @@
+<img src="assets/icon.svg" alt="" width="72" align="right">
+
 # agent-toolkit
 
 Tools for coding agents from [Labs64](https://www.labs64.com).
