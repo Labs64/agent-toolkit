@@ -19,6 +19,13 @@ Everything in this repository is public.
 
       rsvg-convert -w 512 -h 512 assets/icon.svg -o plugins/<name>/icon.png
 
+- `assets/social-preview.svg` is the repository's social preview, uploaded
+  as a PNG under Settings > Social preview. It holds a copy of the icon's
+  shapes, so a change to `icon.svg` goes there too. The text is set in
+  Avenir Next, which macOS ships:
+
+      rsvg-convert -w 1280 -h 640 assets/social-preview.svg -o assets/social-preview.png
+
 ## Rules
 
 - No internal hosts, ticket keys, credentials, personal paths or e-mail
