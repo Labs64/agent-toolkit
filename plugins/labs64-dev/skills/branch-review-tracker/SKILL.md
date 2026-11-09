@@ -1,26 +1,17 @@
 ---
 name: branch-review-tracker
-description: >
-  Use when asked to review a branch or pull/merge request and track its issues
-  until they are fixed, or when invoked by name. Asks for the target branch, base
-  branch and ticket, checks the environment, reviews the code and its prose,
-  verifies every finding against the code, and publishes a read-only Artifact page
-  listing each issue with its status, evidence, fix assessment and file:line.
-  Re-reviews the branch on each update, drafts PR comments and tickets for the
-  user to post, and keeps a small resume file so that a new session can continue
-  at low cost.
+description: Use when asked to review a branch or pull/merge request and track findings across fix rounds, or when the branch-review-tracker name is invoked.
 ---
 
 # Branch review tracker
+
+When using Codex, also follow `references/codex-tools.md` for alternatives to Claude Code-specific tools.
 
 A review of a branch that is fixed over several rounds. Each round re-reviews the
 branch and updates one page: a numbered list of issues, each with a status and a
 Details popup giving the evidence, the commit responsible and the places to look.
 
-The page is a claude.ai Artifact, and it is the record of the review. It is
-read-only for viewers: only Claude changes a status, as the review and the fixes
-progress. A new session resumes from the page's small `context.json`, not from
-the conversation or local files.
+When the `Artifact` tool is available, its page is the review record and the agent running the review maintains its statuses. Without that tool, including in Codex, use the local tracker files. `references/codex-tools.md` defines how Codex stores, updates, and resumes them.
 
 The tracker holds three files:
 
@@ -32,8 +23,7 @@ The tracker holds three files:
 
 ## 1. Ask what to review
 
-Gather candidates first, then ask everything in one `AskUserQuestion` call. Skip a
-question whose answer came with the invocation, for example a PR number or URL.
+Gather candidates first, then ask all unanswered questions in one `AskUserQuestion` call or the platform's user-question interface. In Codex without an equivalent, ask in chat using the same options. Skip a question whose answer came with the invocation, for example a PR number or URL.
 
     git for-each-ref --sort=-committerdate --count=6 --format='%(refname:short)' refs/heads
     git symbolic-ref --short refs/remotes/origin/HEAD      # the default base
@@ -50,6 +40,14 @@ The user can always type another value. Ask the ticket question after the branch
 known, or derive its options from the most likely target.
 
 ## 2. Check the environment
+
+If you do not have a shell or command-execution tool in this session, stop here.
+Do not ask the user to provide target and base branches as a workaround: the
+review still requires Git access. Tell them to open the repository in a Codex
+coding session (or start Codex from that repository) and try again. If they are
+already in a repository-backed Codex session, tell them shell access is
+unavailable in that session and ask them to retry in a session with terminal
+access enabled.
 
 Run the preflight script and show its table to the user:
 
@@ -72,7 +70,7 @@ the table:
 
 | Needed for | Tool | Without it |
 |---|---|---|
-| the review | `code-review` skill, or the `Agent` tool | blocker |
+| the review | `code-review` skill, or the `Agent` tool | blocker in Claude Code; in Codex, use the single-agent fallback in `references/codex-tools.md` |
 | the page | `Artifact` tool | keep the files in the scratchpad and give the user their paths after each round; say so |
 | the ticket's context, and posting tickets | Atlassian tools (`getJiraIssue`, `createJiraIssue`) | review without it; say so |
 | the PR's comments and checks | `gh` or `glab`, authenticated | review the branch only; say so |
@@ -81,17 +79,14 @@ Then look for the project's helper skills, as described in "Helper skills" below
 and add one row per helper to the table: found, with its name, or missing, with
 what the review will lack.
 
-Stop on a blocker and say what is missing. On warnings, say what the review will
-not cover, and go on.
+Stop on a blocker and say what is missing. In Codex, apply the tool fallbacks in `references/codex-tools.md`. On warnings, say what the review will not cover, and go on.
 
 If the ticket can be read, fetch its summary and status. Write a status in
 parentheses after the id: `PROJ-123 (in progress)`.
 
 ## 3. First round
 
-1. **Review.** Invoke `code-review` on `<target>` against `<base>`, or on the PR
-   number. Tell the reviewer to read other commits with `git show <rev>:<path>`, and
-   never to check out anything in the user's directory.
+1. **Review.** Invoke `code-review` on `<target>` against `<base>`, or on the PR number. In Codex, when neither `code-review` nor an independent agent is available, review directly using the same scope and report that it was a single-agent review. Never check out anything in the user's directory.
 2. **Review the prose**, as described in "The prose review" below. `code-review`
    looks for defects in the code and does not cover it.
 3. **Verify every finding**, as described in "Verifying findings" below. An issue
@@ -118,11 +113,7 @@ parentheses after the id: `PROJ-123 (in progress)`.
 
        python3 -I <this skill>/scripts/validate-issues.py <dir>/issues.json --repo <repo>
 
-7. **Publish** with the Artifact tool's publish action, `file_path` set to `<dir>/index.html`,
-   `files` set to `{"issues.json": "<dir>/issues.json", "context.json":
-   "<dir>/context.json"}`, `icon: "checklist"` and a one-sentence `description`.
-   Write the returned URL into both files (`"artifact"`), republish, and give the
-   link to the user.
+7. **Publish.** When Artifact is available, use its publish action with `file_path` set to `<dir>/index.html`, `files` set to `{"issues.json": "<dir>/issues.json", "context.json": "<dir>/context.json"}`, `icon: "checklist"`, and a one-sentence `description`. Write the returned URL into both files (`"artifact"`), republish, and give the link to the user. Without Artifact, including in Codex, save the validated tracker files in the agreed local directory and give the user their paths.
 
 ## 4. Later rounds
 
@@ -167,7 +158,7 @@ Run a round when the user says the branch was updated, or asks for a re-review.
    - Re-find every location's line at the new tip with `git grep -n`. Do not shift
      lines by arithmetic.
    - Append new issues with the next free number. Never renumber.
-9. **Validate, then republish** to the same URL.
+9. **Validate and publish** to the same URL when using Artifact; in Codex, validate and update the saved local tracker files.
 10. **Report** to the user: what this round fixed, what is still open, and what is
     new, with file:line and what was run. End with the page link.
 
@@ -247,7 +238,7 @@ The review flow is the same for every project; what the project knows lives in i
 own skills. Use them when they exist; this skill never hard-codes project tooling.
 
 Find them in this session's list of available skills, by their descriptions. Do not
-guess names. Load one with the `Skill` tool when the step needs it.
+guess names. Load one with the platform's skill mechanism when the step needs it. In Codex, use the fallback described in `references/codex-tools.md` if no skill invocation tool is available.
 
 | Helper | Used for | Without it |
 |---|---|---|
@@ -302,9 +293,11 @@ ticket, a reported data-check result. In one step:
 2. Update `context.json`: its index entry, `waiting`, and any section the change
    affects.
 3. Append a line to `log` in `issues.json`, with the UTC time and what happened.
-4. Validate, then republish all files to the same URL.
+4. Validate, then republish all files to the same Artifact URL, or update the saved local files.
 
 ## Resuming in a new session
+
+In Codex, continue from the saved local files and directory recorded in the resume notes, as described in `references/codex-tools.md`. The Artifact actions below apply when that tool is available.
 
 The page has a "Resume in a new session" button. Hovering over it, or focusing it,
 shows the prompt from `context.json`; clicking it copies the prompt to the
@@ -467,7 +460,7 @@ stands alone.
 
 When the user closes the review, set `closed`: the date, the final hash, the base
 hash, and one sentence saying what is fixed and what was not verified. Update
-`context.json` to say the review is closed. Republish; the page shows a banner.
+`context.json` to say the review is closed. Republish the Artifact page when available; otherwise save the local tracker files and give the user their paths.
 If helpers were missing, offer once more to draft them from the project notes.
 Delete the page only if the user asks for it to be deleted. Deleting cannot be
 undone.
@@ -478,7 +471,7 @@ undone.
   prompt.
 - **The local branch may lag the PR.** Compare with the host's head before
   reviewing, and say which commit the review describes.
-- **The Artifact tool's `edits` cannot be combined with `files`.** To change the page and the
+- **When publishing through Artifact, its `edits` cannot be combined with `files`.** To change the page and the
   data in the same round, edit `index.html` with the Edit tool, then publish all.
 - **A prompt or draft written for the user names the commit it was based on.**
   Check the ref again before handing it over; the branch may have moved.

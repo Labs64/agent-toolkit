@@ -22,9 +22,14 @@ Claude Code:
     claude plugin marketplace add Labs64/agent-toolkit
     claude plugin install labs64-dev@labs64
 
-Other agents that read Agent Skills: copy or link a skill folder, such as
-`plugins/labs64-dev/skills/branch-review-tracker`, into the agent's skills
-directory.
+Codex:
+
+    codex plugin marketplace add Labs64/agent-toolkit
+
+Restart the Codex desktop app after adding or updating the marketplace, then
+open the Plugins Directory, choose the Labs64 marketplace, and install
+`labs64-dev`. The repository includes a Codex marketplace at
+`.agents/plugins/marketplace.json`; Claude Code and Codex use the same skills.
 
 ## Updates
 
