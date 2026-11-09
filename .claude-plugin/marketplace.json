@@ -10,7 +10,7 @@
     {
       "name": "labs64-dev",
       "description": "Labs64 skills for software development workflows",
-      "version": "1.0.0",
+      "version": "1.0.2",
       "source": "./plugins/labs64-dev"
     }
   ]

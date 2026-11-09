@@ -1,0 +1,15 @@
+{
+  "name": "labs64-dev",
+  "version": "1.0.2",
+  "description": "Labs64 skills for software development workflows",
+  "author": {
+    "name": "Labs64 GmbH",
+    "url": "https://www.labs64.com"
+  },
+  "homepage": "https://github.com/Labs64/agent-toolkit",
+  "repository": "https://github.com/Labs64/agent-toolkit",
+  "license": "Apache-2.0",
+  "keywords": ["development", "code-review", "pull-request", "merge-request"],
+  "icon": "./icon.png",
+  "skills": "./skills/"
+}

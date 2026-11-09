@@ -1,0 +1,20 @@
+{
+  "name": "labs64",
+  "interface": {
+    "displayName": "Labs64 tools for coding agents"
+  },
+  "plugins": [
+    {
+      "name": "labs64-dev",
+      "source": {
+        "source": "local",
+        "path": "./plugins/labs64-dev"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
