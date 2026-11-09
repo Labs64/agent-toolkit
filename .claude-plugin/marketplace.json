@@ -8,16 +8,10 @@
   },
   "plugins": [
     {
-      "name": "review",
-      "description": "Track a branch review and its fixes across rounds",
-      "version": "1.0.1",
-      "source": "./plugins/review"
-    },
-    {
-      "name": "writing",
-      "description": "Draft merge and pull request titles and descriptions",
-      "version": "1.0.1",
-      "source": "./plugins/writing"
+      "name": "labs64-dev",
+      "description": "Labs64 skills for software development workflows",
+      "version": "1.0.0",
+      "source": "./plugins/labs64-dev"
     }
   ]
 }
