@@ -1,7 +1,7 @@
 {
-  "name": "review",
-  "version": "1.0.1",
-  "description": "Track a branch review and its fixes across rounds",
+  "name": "labs64-dev",
+  "version": "1.0.0",
+  "description": "Review branches and track their fixes, and draft pull request descriptions",
   "author": {
     "name": "Labs64 GmbH",
     "url": "https://www.labs64.com"
@@ -9,6 +9,6 @@
   "homepage": "https://github.com/Labs64/agent-toolkit",
   "repository": "https://github.com/Labs64/agent-toolkit",
   "license": "Apache-2.0",
-  "keywords": ["code-review", "pull-request", "merge-request"],
+  "keywords": ["code-review", "pull-request", "merge-request", "writing"],
   "icon": "./icon.png"
 }
