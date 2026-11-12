@@ -220,7 +220,9 @@ with which toolchain and settings, comes from the project's build-and-test helpe
 and its instructions, not from this skill.
 
 1. **Never use the user's checkout.** Put the commit under test in a separate
-   directory:
+   directory, the way the project's build-and-test helper or the repository's and
+   workspace's instructions say, for example with a tool that reuses the user's
+   build. Only if neither says how:
    - `git worktree add --detach <scratchpad>/<name>-wt <sha>`;
    - if anything blocks the worktree, export the commit instead, leaving out the
      paths that block it:
@@ -228,6 +230,8 @@ and its instructions, not from this skill.
      example, a `git-crypt` smudge filter fails on encrypted paths when the key is
      not available to it. The preflight script names the paths that have checkout
      filters.
+   If the project's method refuses a commit, for example because the commit needs
+   a build of its own, tell the user what it would take before working around it.
 2. **Build and run the way the project says.** A tool failure, such as a toolchain
    the project does not support, is not a test result: fix the environment as the
    project's helper or instructions say, then run again. Without a helper, ask the
@@ -243,10 +247,10 @@ and its instructions, not from this skill.
 5. **Keep the test source in the tracker.** The scratchpad can be wiped between
    sessions. Publish the test as `tests/<Name>.<ext>` in `files`, with
    `contentType: "text/plain"`, and name it in the issue.
-6. **Clean up.** Remove the worktree or the export, and any build output a run left
-   in the user's checkout, such as compiled test classes, which a later build would
-   pick up. Then check that `git status` and `git worktree list` show the user's
-   checkout unchanged.
+6. **Clean up.** Remove what the run left: the worktree or the export, unless the
+   project's tool removes it itself, and any build output in the user's checkout,
+   such as compiled test classes, which a later build would pick up. Then check
+   that `git status` and `git worktree list` show the user's checkout unchanged.
 
 ## Helper skills
 
@@ -482,7 +486,7 @@ undone.
 ## Pitfalls
 
 - **The user's checkout stays put.** A subagent gets the same instruction in its
-  prompt.
+  prompt, with the project's way of isolating a commit if the run needs one.
 - **The local branch may lag the PR.** Compare with the host's head before
   reviewing, and say which commit the review describes.
 - **The Artifact tool's `edits` cannot be combined with `files`.** To change the page and the
