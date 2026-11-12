@@ -8,13 +8,29 @@ description: Use when drafting or revising the title and description of a merge 
 "MR" below means the unit of review on whatever service hosts the repository:
 a merge request on GitLab, a pull request on GitHub, or the equivalent
 elsewhere, cloud or self-hosted. Use the term the host uses when writing to the
-user. For a small MR (a single commit, say), write the text and create it
-without asking for confirmation. For a larger one, draft the title and
-description in chat for review first. Create or update it, with the host's CLI
-(`glab`, `gh`) or API, only once the user approves the text and asks for it.
+user.
 
-Always assign a new MR to the user: `--assignee @me` with `gh pr create`,
-`--assignee <username>` with `glab mr create`.
+Draft the title and description in chat for review first, then create or update
+the MR with the host's CLI (`glab`, `gh`) or API once the user approves the text
+and asks for it. One case skips the review: create the MR straight away, without
+showing the draft first, only if all of these hold:
+
+- the user asked to create the MR, not only to write its text;
+- the branch has one commit, and the description needs nothing beyond the
+  opening line and the changes: no `## Behaviour changes`, no `## Testing`;
+- the branch is on the remote, at the same commit as the local branch;
+- no instruction of the user, the project or the workspace asks for confirmation
+  before an MR is created.
+
+If any of them fails, draft first. Never push to make the last-but-one condition
+hold: pushing is the user's step, and the project's instructions may require
+checks before it. After creating an MR, give its link and the text as posted.
+Updating an existing MR always shows the new text first, because reviewers may
+already have read the old one.
+
+Assign a new MR to the user, unless the user or the project says otherwise:
+`--assignee @me` with `gh pr create`, `--assignee <username>` with
+`glab mr create`.
 
 `PROJ-1234` below stands for whatever ticket the MR belongs to.
 
