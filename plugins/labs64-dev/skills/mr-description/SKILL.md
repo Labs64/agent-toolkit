@@ -83,3 +83,11 @@ Content:
 - Apply every installed skill that covers cleaning up generated prose to the
   title and the description. Where such a skill conflicts with the project's
   instructions (`CLAUDE.md` or equivalent), the project's instructions win.
+- **Writing the description changes nothing else.** It reads the branch, and
+  writes only the title and the description. If the reading turns up a problem
+  on the branch, such as a defect, a comment or docstring that the code
+  contradicts or that breaks the project's prose rules, or a leftover from
+  development, do not fix it, and do not mention it in the description. List
+  it for the user after the draft, with `file:line` and one sentence on what
+  is wrong. The user decides whether it gets fixed first, or whether the
+  description mentions it.
