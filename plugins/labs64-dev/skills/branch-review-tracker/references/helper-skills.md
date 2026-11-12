@@ -41,6 +41,14 @@ tests."
 
 Holds:
 
+- an environment check the review runs in its preflight. Name the script in the
+  helper's `SKILL.md`. It takes `--target <ref> [--base <ref>] [--ticket <id>]
+  [--repo <dir>]`, prints one line per check as `LEVEL check message`, with LEVEL
+  one of `OK`, `INFO`, `WARN` and `FAIL`, and exits 0 if all is fine, 1 on
+  warnings only and 2 on a `FAIL`. It checks what a generic preflight cannot: the
+  toolchain and the installed tools, whether the build outputs exist and load,
+  whether they match the commits under review, and any project-specific place
+  the ticket appears;
 - how to get a commit into an isolated directory, and what blocks a worktree in
   this repository, with the workaround, for example encrypted paths to exclude
   from `git archive`;
@@ -51,7 +59,8 @@ Holds:
 - how to run one test class or module quickly, and the known slow or flaky suites;
 - which commands need the user's permission first.
 
-Improves: reproducing findings, and confirming fixes beyond reading the code.
+Improves: the preflight's view of the environment, reproducing findings, and
+confirming fixes beyond reading the code.
 
 ## Data checks
 

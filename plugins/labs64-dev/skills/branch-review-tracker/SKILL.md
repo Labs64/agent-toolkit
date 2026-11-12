@@ -58,8 +58,8 @@ Run the preflight script and show its table to the user:
 It checks the repository, both refs, the user's checkout, whether the local branch
 matches the PR head, the PR on the host, checkout filters that can stop
 `git worktree`, and the CLIs the review uses. Exit code 2 means a blocker; 1 means
-warnings only. It does not check the project's build tools: those belong to the
-project's helper skills.
+warnings only. It does not check the project's build tools: the project's
+build-and-test helper does, as described below.
 
 The script fetches both branches. It takes the base from origin, where it is
 current, and the target from the clone, where the author may have pushed it.
@@ -80,6 +80,13 @@ the table:
 Then look for the project's helper skills, as described in "Helper skills" below,
 and add one row per helper to the table: found, with its name, or missing, with
 what the review will lack.
+
+If the build-and-test helper names an environment check, run it with the refs the
+preflight printed and the ticket, and add its lines to the table. Its lines and
+exit code have the preflight's format. A FAIL in it blocks builds and tests: the
+review goes on by reading the code, and says so. If a line of the helper checks
+something the preflight checked too, such as where the ticket appears, the
+helper's line settles it: an OK there replaces the preflight's WARN.
 
 Stop on a blocker and say what is missing. On warnings, say what the review will
 not cover, and go on.
@@ -252,7 +259,7 @@ guess names. Load one with the `Skill` tool when the step needs it.
 | Helper | Used for | Without it |
 |---|---|---|
 | review checklist | the project's risk areas: security model, compatibility promises, API contracts, migrations | the review relies on general knowledge; say which areas it may miss |
-| build and test | building and testing one commit in isolation: commands, toolchain, settings, known blockers | tests run only after asking the user how; findings stay "from reading the code" |
+| build and test | checking that the environment can build and test; building and testing one commit in isolation: commands, toolchain, settings, known blockers | the preflight does not check the build environment; tests run only after asking the user how; findings stay "from reading the code" |
 | data checks | answering questions from data outside the repository, safely | the user is asked how to find out |
 | prose rules | comments, docstrings, changelogs, commit messages and PR text, such as a general writing standard | the prose review uses the instruction files only |
 | ticket conventions | the ticket system's projects, types, priorities, fields and links | the project is queried before posting |
