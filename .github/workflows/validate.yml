@@ -15,6 +15,11 @@ jobs:
         env:
           CHECK_PUBLIC_EXTRA: ${{ secrets.CHECK_PUBLIC_EXTRA }}
 
+      - uses: editorconfig-checker/action-editorconfig-checker@main
+
+      - name: Check final newlines and trailing whitespace
+        run: editorconfig-checker
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
