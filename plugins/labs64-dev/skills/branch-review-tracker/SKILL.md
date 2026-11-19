@@ -1,14 +1,20 @@
 ---
 name: branch-review-tracker
 description: >
-  Use when asked to review a branch or pull/merge request and track its issues
-  until they are fixed, or when invoked by name. Asks for the target branch, base
-  branch and ticket, checks the environment, reviews the code and its prose,
-  verifies every finding against the code, and publishes a read-only Artifact page
-  listing each issue with its status, evidence, fix assessment and file:line.
-  Re-reviews the branch on each update, drafts PR comments and tickets for the
-  user to post, and keeps a small resume file so that a new session can continue
-  at low cost.
+  Use for any review of a branch or a pull/merge request: "review this branch",
+  "review this PR", "check the branch against its ticket", a re-review after
+  fixes, or when invoked by name. Use it even when the user does not mention
+  tracking: tracking the issues until they are fixed is what it adds, not a
+  condition for using it. Load any project-specific review checklist together
+  with it, not instead of it.
+  Asks for the target branch, base branch and ticket, checks the environment,
+  reviews the code and its prose against the ticket and its design comments,
+  verifies every finding against the code, and publishes a read-only Artifact
+  page listing each issue with its status, evidence, fix assessment and
+  file:line. Re-reviews the branch on each update, drafts PR comments and
+  tickets for the user to post, and keeps a small resume file so that a new
+  session can continue at low cost. Not for a quick question about a single
+  hunk or about uncommitted local changes.
 ---
 
 # Branch review tracker
