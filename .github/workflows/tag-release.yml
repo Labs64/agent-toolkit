@@ -1,0 +1,38 @@
+name: tag-release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'plugins/*/.claude-plugin/plugin.json'
+      - '.claude-plugin/marketplace.json'
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Tag plugin versions not yet tagged
+        run: |
+          npm install -g @anthropic-ai/claude-code
+          git config user.name "$(git log -1 --format=%an)"
+          git config user.email "$(git log -1 --format=%ae)"
+          for p in plugins/*/; do
+            name=$(jq -r .name "$p/.claude-plugin/plugin.json")
+            version=$(jq -r .version "$p/.claude-plugin/plugin.json")
+            if git rev-parse -q --verify "refs/tags/$name--v$version" >/dev/null; then
+              echo "$name--v$version exists"
+            else
+              claude plugin tag --push "$p"
+            fi
+          done
