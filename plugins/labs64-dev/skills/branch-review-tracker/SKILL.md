@@ -33,8 +33,12 @@ The tracker holds three files:
 - `index.html`: the page, a copy of `assets/tracker.html`;
 - `issues.json`: every issue, and the session log;
 - `context.json`: the resume notes and an index of the issues for the next
-  session, the prompt that starts it, and the short list of what waits on the user,
-  which is the only part the page shows.
+  session, the prompt that starts it, the short list of what waits on the user,
+  and the list of extra files; the page shows only these two lists.
+
+Extra files, such as a reproduction test or a write-up, are published next to them
+under `tests/` or `docs/`. The page lists each one under "Files", with View, Open
+in new tab and Download; View and the new tab render Markdown and highlight code.
 
 ## 1. Ask what to review
 
@@ -134,9 +138,11 @@ parentheses after the id: `PROJ-123 (in progress)`.
 
 7. **Publish** with the Artifact tool's publish action, `file_path` set to `<dir>/index.html`,
    `files` set to `{"issues.json": "<dir>/issues.json", "context.json":
-   "<dir>/context.json"}`, `icon: "checklist"` and a one-sentence `description`.
-   Write the returned URL into both files (`"artifact"`), republish, and give the
-   link to the user.
+   "<dir>/context.json"}` plus every extra file, `icon: "checklist"`,
+   `capabilities: {"downloads": true}` for the Download button, and a one-sentence
+   `description`. Later publishes omit `capabilities`, which carries the declaration
+   forward. Write the returned URL into both files (`"artifact"`), republish, and
+   give the link to the user.
 
 ## 4. Later rounds
 
@@ -254,7 +260,7 @@ and its instructions, not from this skill.
    code.
 5. **Keep the test source in the tracker.** The scratchpad can be wiped between
    sessions. Publish the test as `tests/<Name>.<ext>` in `files`, with
-   `contentType: "text/plain"`, and name it in the issue.
+   `contentType: "text/plain"`, list it in `attachments`, and name it in the issue.
 6. **Clean up.** Remove what the run left: the worktree or the export, unless the
    project's tool removes it itself, and any build output in the user's checkout,
    such as compiled test classes, which a later build would pick up. Then check
@@ -338,7 +344,9 @@ the link:
 2. When work on an issue starts, read `issues.json` with the Artifact tool
    (`action: "read"`, `path: "issues.json"`), which saves the file to the
    scratchpad. Extract the one issue:
-   `jq '.issues[] | select(.n == 11)' <file>`. Read `tests/` files only when needed.
+   `jq '.issues[] | select(.n == 11)' <file>`. Read the files in `attachments`
+   only when needed, with `out_dir` set to the tracker folder so that each lands
+   at its published path, where the validator expects it.
 3. Check the PR for commits and comments newer than `context.json` records, and tell
    the user briefly what changed.
 4. Continue, and publish with `url` set to the page's address.
@@ -449,9 +457,10 @@ It may also have:
 | `index[]` | `{n, status, title, blocker}` for every issue, matching `issues.json` |
 | `waiting[]` | `{kind, text, issues}`: what waits on the user, shown on the page; `kind` is `decision`, `to post` or `to run` |
 | `sections[]` | `{title, text}`: the resume notes, for the agent only; the page does not show them |
+| `attachments[]` | `{path, title, about}`: every extra file published with the tracker; `path` is its published path, relative, and the file sits at that path in the tracker folder |
 
-The page shows only `waiting` from this file, under "Waiting on you", and hides
-the block when it is empty. Write each item as one sentence the user can act on,
+The page shows `waiting` from this file under "Waiting on you", and `attachments`
+under "Files"; it hides each block when its list is empty. Write each item as one sentence the user can act on,
 with the issue numbers it concerns. Remove an item once the user has acted on it.
 
 Keep the sections short. Use these titles:

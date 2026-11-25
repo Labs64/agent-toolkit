@@ -53,5 +53,12 @@
       "title": "Conventions",
       "text": "PR comments: concise, copy-paste markdown, anchored to a permalink line range. Tickets: no line numbers or commit SHAs."
     }
+  ],
+  "attachments": [
+    {
+      "path": "tests/FilterQuotingTest.java",
+      "title": "Filter quoting test",
+      "about": "Reproduces #1: a quoted filter value lets a caller export another account's data."
+    }
   ]
 }
