@@ -24,7 +24,8 @@
         {
           "path": "src/main/java/com/example/export/ExportController.java",
           "line": 120,
-          "what": "restrictFilter: the account number is now set in the decoded map"
+          "what": "restrictFilter: the account number is now set in the decoded map",
+          "url": "https://github.com/example-org/example-service/pull/42/files#diff-d011717961ab536956726d7bd1c9d2e30bc2aa0b45bb03ffee640b1896460de7R120"
         }
       ],
       "detail": [

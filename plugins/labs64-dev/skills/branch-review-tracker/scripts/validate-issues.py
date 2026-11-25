@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
 """Checks a review tracker's issues.json and context.json.
 
-Checks the schema, that every location exists at the reviewed commit, and that the
-index in context.json matches the issues. Exits non-zero and lists the problems if
-any check fails.
+Checks the schema, that every location exists at the reviewed commit, that every
+location's link is current, and that the index in context.json matches the issues.
+Exits non-zero and lists the problems if any check fails.
 
-    validate-issues.py <issues.json> [--context <context.json>] [--repo <path>]
+    validate-issues.py <issues.json> [--context <context.json>] [--repo <path>] [--link]
+
+--link first writes each location's "url" into issues.json. For a GitHub pull
+request, a line that the PR's "Files changed" tab shows links there; any other
+line links to the file at the reviewed commit. Without a GitHub PR, locations get
+no link.
 
 context.json defaults to the file next to issues.json; a missing file is reported.
 """
@@ -13,14 +18,18 @@ context.json defaults to the file next to issues.json; a missing file is reporte
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 
 STATUSES = {"open", "in progress", "partial", "fixed", "dismissed", "wontfix"}
 ISSUE_REQUIRED = ("n", "status", "title", "commit", "commitRole", "locations", "detail", "verified")
 CONTEXT_REQUIRED = ("updatedAt", "reviewed", "resumePrompt", "index", "sections")
+GITHUB_PR = re.compile(r"^https://github\.com/([^/]+)/([^/]+)/pull/(\d+)/?$")
+HUNK = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@")
 
 
 def main() -> int:
@@ -28,10 +37,16 @@ def main() -> int:
     parser.add_argument("issues")
     parser.add_argument("--context")
     parser.add_argument("--repo", default=".")
+    parser.add_argument("--link", action="store_true", help="write each location's url first")
     args = parser.parse_args()
 
     with open(args.issues, encoding="utf-8") as f:
         review = json.load(f)
+    if args.link:
+        link(review, args.repo)
+        with open(args.issues, "w", encoding="utf-8") as f:
+            json.dump(review, f, indent=2, ensure_ascii=False)
+            f.write("\n")
     problems = check(review, args.repo)
 
     context_path = args.context or os.path.join(os.path.dirname(args.issues) or ".", "context.json")
@@ -44,7 +59,7 @@ def main() -> int:
     for problem in problems:
         print(problem)
     if not problems:
-        print(f"{len(review['issues'])} issues, all locations exist at {review['reviewed']}; context.json matches")
+        print(f"{len(review['issues'])} issues, all locations exist at {review['reviewed']} and their links are current; context.json matches")
     return 1 if problems else 0
 
 
@@ -60,6 +75,7 @@ def check(review: dict, repo: str) -> list[str]:
     if _git(repo, "rev-parse", "--verify", "--quiet", f"{reviewed}^{{commit}}") is None:
         return [f"reviewed commit {reviewed} not found in {repo}"]
 
+    urls = location_urls(review, repo)
     numbers = [issue.get("n") for issue in review["issues"]]
     if len(set(numbers)) != len(numbers):
         problems.append(f"duplicate issue numbers: {numbers}")
@@ -92,10 +108,67 @@ def check(review: dict, repo: str) -> list[str]:
                 problems.append(f"{label}: {path} does not exist at {reviewed}")
             elif not 1 <= line <= count:
                 problems.append(f"{label}: {path}:{line} is past the end ({count} lines)")
+            expected = urls(path, line)
+            if location.get("url") != expected:
+                problems.append(f"{label}: {path}:{line} link is missing or stale; run with --link")
     for i, entry in enumerate(review["log"]):
         if not _has(entry, "at", "text"):
             problems.append(f"log entry {i}: needs 'at' and 'text'")
     return problems
+
+
+def link(review: dict, repo: str) -> None:
+    urls = location_urls(review, repo)
+    for issue in review.get("issues", []):
+        for location in issue.get("locations", []):
+            path, line = location.get("path"), location.get("line")
+            if not path or not isinstance(line, int):
+                continue
+            url = urls(path, line)
+            if url:
+                location["url"] = url
+            else:
+                location.pop("url", None)
+
+
+def location_urls(review: dict, repo: str):
+    """Returns a function giving a location's url, or None where there is no GitHub PR."""
+    match = GITHUB_PR.match((review.get("pr") or {}).get("url") or "")
+    sha = _git(repo, "rev-parse", "--verify", "--quiet", f"{review.get('reviewed')}^{{commit}}")
+    if not match or not sha:
+        return lambda path, line: None
+    owner, name, number = match.groups()
+    sha = sha.strip()
+    shown = _diff_lines(repo, review.get("base"), sha)
+
+    def url(path: str, line: int) -> str:
+        if line in shown.get(path, ()):
+            anchor = hashlib.sha256(path.encode("utf-8")).hexdigest()
+            return f"https://github.com/{owner}/{name}/pull/{number}/files#diff-{anchor}R{line}"
+        return f"https://github.com/{owner}/{name}/blob/{sha}/{path}#L{line}"
+
+    return url
+
+
+def _diff_lines(repo: str, base: str | None, head: str) -> dict[str, set[int]]:
+    """The new-side lines of each file that the PR's diff shows, context included."""
+    base_ref = next((ref for ref in (f"origin/{base}", base) if ref and
+                     _git(repo, "rev-parse", "--verify", "--quiet", f"{ref}^{{commit}}")), None)
+    if not base_ref:
+        return {}
+    # Three dots: from the merge base, as the "Files changed" tab compares.
+    diff = _git(repo, "-c", "core.quotePath=off", "diff", "--no-color", "--no-ext-diff",
+                "--unified=3", "-M", f"{base_ref}...{head}") or ""
+    shown: dict[str, set[int]] = {}
+    lines: set[int] | None = None
+    for row in diff.splitlines():
+        if row.startswith("+++ "):
+            target = row[4:]
+            lines = shown.setdefault(target[2:], set()) if target.startswith("b/") else None
+        elif lines is not None and (hunk := HUNK.match(row)):
+            start, size = int(hunk.group(1)), int(hunk.group(2) or 1)
+            lines.update(range(start, start + size))
+    return shown
 
 
 def check_context(context: dict, review: dict) -> list[str]:

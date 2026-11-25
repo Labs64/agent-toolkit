@@ -70,6 +70,7 @@
   .locs { list-style: none; margin: 0; padding: 0; border: 0; border-radius: 0; background: none; display: flex; flex-direction: column; gap: 8px; }
   .locs li { display: flex; flex-direction: column; gap: 2px; padding: 0; border: 0; }
   .loc { font-family: var(--mono); font-size: 12.5px; overflow-wrap: anywhere; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+  .loc a { color: inherit; text-decoration-color: var(--muted); text-underline-offset: 2px; }
   .copy { font: inherit; font-family: var(--sans); font-size: 11.5px; color: var(--muted); background: transparent; border: 1px solid var(--line); border-radius: 4px; padding: 0 6px; cursor: pointer; }
   .what { font-size: 13.5px; color: var(--muted); }
   .text p { margin: 0 0 8px; max-width: 65ch; }
@@ -238,7 +239,16 @@
         const li = el("li");
         const ref = l.path + ":" + l.line;
         const loc = el("div", "loc");
-        loc.append(el("span", null, ref));
+        if (l.url) {
+          const a = el("a", null, ref);
+          a.href = l.url;
+          a.target = "_blank";
+          a.rel = "noopener";
+          a.title = l.url.includes("/files#") ? "Open in the PR's Files changed tab" : "Open the file at the reviewed commit";
+          loc.append(a);
+        } else {
+          loc.append(el("span", null, ref));
+        }
         const cp = el("button", "copy", "Copy");
         cp.type = "button";
         cp.addEventListener("click", () => {

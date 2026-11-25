@@ -125,11 +125,12 @@ parentheses after the id: `PROJ-123 (in progress)`.
      the page name. The name is the branch's topic in two to four words, followed
      by "Review", such as `API Key Authorization Review`.
    - `issues.json` and `context.json`, as described in "The data files" below.
-6. **Validate** both files. The validator checks the schema, that every location
-   exists at the reviewed commit, and that the index in `context.json` matches
-   the issues:
+6. **Link and validate** both files. With `--link`, the validator first writes each
+   location's `url`. It then checks the schema, that every location exists at the
+   reviewed commit and its link is current, and that the index in `context.json`
+   matches the issues:
 
-       python3 -I <this skill>/scripts/validate-issues.py <dir>/issues.json --repo <repo>
+       python3 -I <this skill>/scripts/validate-issues.py <dir>/issues.json --repo <repo> --link
 
 7. **Publish** with the Artifact tool's publish action, `file_path` set to `<dir>/index.html`,
    `files` set to `{"issues.json": "<dir>/issues.json", "context.json":
@@ -180,7 +181,8 @@ Run a round when the user says the branch was updated, or asks for a re-review.
    - Re-find every location's line at the new tip with `git grep -n`. Do not shift
      lines by arithmetic.
    - Append new issues with the next free number. Never renumber.
-9. **Validate, then republish** to the same URL.
+9. **Link and validate** (`--link`, as in the first round), then republish to the
+   same URL.
 10. **Report** to the user: what this round fixed, what is still open, and what is
     new, with file:line and what was run. End with the page link.
 
@@ -319,7 +321,7 @@ ticket, a reported data-check result. In one step:
 2. Update `context.json`: its index entry, `waiting`, and any section the change
    affects.
 3. Append a line to `log` in `issues.json`, with the UTC time and what happened.
-4. Validate, then republish all files to the same URL.
+4. Link and validate, then republish all files to the same URL.
 
 ## Resuming in a new session
 
@@ -418,7 +420,10 @@ Every issue has:
 - `where`: a short pointer, such as `TokenService getExportTokens`;
 - `commit` and `commitRole`: for example `Introduced in`, `Introduced and fixed in`,
   `Fixed in`, `Pre-existing on`;
-- `locations[]`: `{path, line, what}`, repository-relative, at `reviewed`;
+- `locations[]`: `{path, line, what, url}`, repository-relative, at `reviewed`.
+  `url` is written by the validator's `--link`, never by hand: for a GitHub PR, a
+  line the "Files changed" tab shows links there, and any other line links to the
+  file at `reviewed`. Without a GitHub PR, locations have no link;
 - `detail[]`: paragraphs, written as the "Wording" section below asks;
 - `verified`: how the issue, or its fix, was verified, and what was not.
 
