@@ -473,6 +473,10 @@ Keep the sections short. Use these titles:
 - `wontfix`: a valid issue the user decided not to fix. `dismissal` records the
   decision.
 
+Apart from its status, an issue with `posted` entries carries a "reported" tag on
+the page, which links to the first place it was posted. Record every posted
+comment in `posted`, and the tag follows.
+
 ## Wording
 
 `detail`, `fix`, `verified` and drafts are technical text: the wording rules of the

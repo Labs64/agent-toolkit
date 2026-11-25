@@ -6,17 +6,17 @@
   :root {
     --bg: #f6f7f9; --surface: #ffffff; --fg: #1b2230; --muted: #5d6676; --line: #dde1e8;
     --open: #b4232c; --open-bg: #fbe9ea; --prog: #93600a; --prog-bg: #fbf1dc;
-    --fixed: #1f7a4a; --fixed-bg: #e3f3ea; --idle: #6b7280; --idle-bg: #eceef1;
+    --fixed: #1f7a4a; --fixed-bg: #e3f3ea; --rep: #1d5fa8; --idle: #6b7280; --idle-bg: #eceef1;
     --sans: "IBM Plex Sans", system-ui, sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace;
   }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
     --bg: #12161d; --surface: #1a2029; --fg: #e4e8ee; --muted: #98a1b0; --line: #2b3340;
     --open: #f2858b; --open-bg: #3a1d21; --prog: #e7b660; --prog-bg: #36290f;
-    --fixed: #6fd19c; --fixed-bg: #15301f; --idle: #9aa1ab; --idle-bg: #262c35; color-scheme: dark } }
+    --fixed: #6fd19c; --fixed-bg: #15301f; --rep: #8cb8f0; --idle: #9aa1ab; --idle-bg: #262c35; color-scheme: dark } }
   :root[data-theme="dark"] {
     --bg: #12161d; --surface: #1a2029; --fg: #e4e8ee; --muted: #98a1b0; --line: #2b3340;
     --open: #f2858b; --open-bg: #3a1d21; --prog: #e7b660; --prog-bg: #36290f;
-    --fixed: #6fd19c; --fixed-bg: #15301f; --idle: #9aa1ab; --idle-bg: #262c35; color-scheme: dark }
+    --fixed: #6fd19c; --fixed-bg: #15301f; --rep: #8cb8f0; --idle: #9aa1ab; --idle-bg: #262c35; color-scheme: dark }
   body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 15px; line-height: 1.45; margin: 0; padding-bottom: 40px; }
   /* Top bar spans the page; its content lines up with the column below. */
   .topbar { background: var(--surface); border-bottom: 1px solid var(--line);
@@ -48,6 +48,8 @@
   .tag { font-size: 11.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; margin-left: 8px; }
   .tag.blocker { color: var(--open); }
   .tag.minor { color: var(--muted); }
+  .tag.reported { color: var(--rep); text-decoration: none; }
+  a.tag.reported:hover { text-decoration: underline; }
   .err { color: var(--open); }
   .closed { margin-top: 8px; padding: 10px 12px; border-radius: 8px; background: var(--fixed-bg); color: var(--fg); font-size: 14px; max-width: 70ch; }
   .closed strong { color: var(--fixed); font-weight: 600; }
@@ -145,6 +147,14 @@
   const when = t => (t || "").replace("T", " ").slice(0, 16) + (t ? " UTC" : "");
   const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
   const chip = s => el("span", "chip s-" + s.replace(" ", "-"), s);
+  // Raised with the developer, whatever the status: links to the first place it was
+  // posted, and lists every place on hover.
+  const reportedTag = posted => {
+    const tag = el(posted[0].url ? "a" : "span", "tag reported", "reported");
+    if (posted[0].url) { tag.href = posted[0].url; tag.target = "_blank"; tag.rel = "noopener"; }
+    tag.title = posted.map(p => (p.where || "Posted") + ", " + when(p.at)).join("\n");
+    return tag;
+  };
 
   fetch("issues.json", { cache: "no-store" }).then(r => r.json()).then(review => {
     if (review.title) document.getElementById("title").textContent = review.title;
@@ -171,6 +181,7 @@
       const title = el("div", "title", i.title);
       if (i.blocker && !isDone(i.status)) title.append(el("span", "tag blocker", "before merge"));
       if (i.minor) title.append(el("span", "tag minor", "minor"));
+      if (i.posted && i.posted.length) title.append(reportedTag(i.posted));
       body.append(title);
       if (i.where) body.append(el("div", "where", i.where));
       if (i.note) body.append(el("div", "note", i.note));
