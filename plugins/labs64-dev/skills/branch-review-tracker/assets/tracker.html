@@ -109,6 +109,13 @@
   .log { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; border: 0; background: none; }
   .log li { display: grid; grid-template-columns: 9.5em 1fr; gap: 10px; padding: 0; border: 0; font-size: 14px; }
   .log time { font-family: var(--mono); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; padding-top: 2px; }
+  .files li { grid-template-columns: 1fr auto; }
+  .file-name { font-weight: 500; }
+  .file-path { font-family: var(--mono); font-size: 12.5px; color: var(--muted); overflow-wrap: anywhere; }
+  .file-about { font-size: 13.5px; color: var(--muted); }
+  .file-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+  .file-status { font-size: 12.5px; color: var(--muted); }
+  .dlg .viewer { max-height: 65vh; overflow: auto; }
   .dlg textarea { width: 100%; box-sizing: border-box; font-family: var(--mono); font-size: 13px; line-height: 1.45; padding: 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); resize: vertical; }
   .dlg-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: flex-end; }
   .dlg-status { margin-right: auto; color: var(--muted); font-size: 13px; }
@@ -135,6 +142,10 @@
   <section id="waiting-sec" hidden>
     <h2 class="sec">Waiting on you<span class="sec-meta" id="waiting-updated"></span></h2>
     <ul class="waiting" id="waiting"></ul>
+  </section>
+  <section id="files-sec" hidden>
+    <h2 class="sec">Files</h2>
+    <ul class="waiting files" id="files"></ul>
   </section>
   <section>
     <h2 class="sec">Session log</h2>
@@ -322,6 +333,7 @@
     if (!ctx) return;
     resumePrompt = ctx.resumePrompt || "";
     showTip();
+    renderFiles(ctx.attachments || []);
     const items = ctx.waiting || [];
     if (!items.length) return;
     document.getElementById("waiting-updated").textContent = ctx.updatedAt ? "updated " + when(ctx.updatedAt) : "";
@@ -335,6 +347,208 @@
     }
     document.getElementById("waiting-sec").hidden = false;
   }).catch(e => console.error(e));
+
+  // Files published next to the page, as listed in context.json "attachments". The page
+  // cannot list its published files itself. View shows a text file in a popup; Download
+  // goes through the downloads capability, which asks the viewer to confirm.
+  const TEXT_FILE = /\.(md|txt|json|csv|java|kt|js|ts|py|sql|xml|ya?ml|properties|sh|html)$/i;
+  const SAVE_AS_IS = /\.(txt|json|md|csv|html|svg|pdf|zip|png|jpe?g|gif|webp)$/i;
+  const downloadsReady = window.claude && window.claude.use
+    ? window.claude.use("downloads").catch(() => null) : Promise.resolve(null);
+
+  function renderFiles(files) {
+    const valid = files.filter(f => f && typeof f.path === "string" && !/^[a-z]+:|^\/|\.\./i.test(f.path));
+    if (!valid.length) return;
+    const ul = document.getElementById("files");
+    for (const f of valid) {
+      const li = el("li");
+      const info = el("div", "body");
+      info.append(el("div", "file-name", f.title || f.path), el("div", "file-path", f.path));
+      if (f.about) info.append(el("div", "file-about", f.about));
+      const actions = el("div", "file-actions");
+      const status = el("span", "file-status");
+      status.setAttribute("role", "status");
+      if (TEXT_FILE.test(f.path)) {
+        const view = el("button", "more", "View");
+        view.type = "button";
+        view.setAttribute("aria-haspopup", "dialog");
+        view.addEventListener("click", () => viewFile(f, status));
+        actions.append(view);
+      }
+      const tab = el("button", "more", "Open in new tab");
+      tab.type = "button";
+      tab.addEventListener("click", () => openInTab(f, status));
+      actions.append(tab);
+      const save = el("button", "more", "Download");
+      save.type = "button";
+      save.hidden = true;
+      save.addEventListener("click", () => downloadFile(f, status));
+      downloadsReady.then(api => { save.hidden = !api; });
+      actions.append(save, status);
+      li.append(info, actions);
+      ul.append(li);
+    }
+    document.getElementById("files-sec").hidden = false;
+  }
+
+  const fetchFile = f => fetch(f.path, { cache: "no-store" }).then(r => {
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r;
+  });
+
+  // Viewer for file text: Markdown as sanitized HTML, code highlighted by its extension.
+  // The libraries load on first use; without them the text is shown plain.
+  const LIBS = {
+    marked: "https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js",
+    purify: "https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.9/purify.min.js",
+    hljs: "https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js",
+  };
+  const LANG = { java: "java", kt: "kotlin", js: "javascript", ts: "typescript", py: "python", sql: "sql",
+    xml: "xml", xsd: "xml", html: "xml", json: "json", yml: "yaml", yaml: "yaml", properties: "ini",
+    sh: "bash", md: "markdown", csv: "plaintext", txt: "plaintext" };
+  // Token colors reuse the page's tokens; the fallbacks apply in a new tab, which has none.
+  const VIEWER_CSS = `
+    .viewer { --v-fg: var(--fg, #1b2230); --v-muted: var(--muted, #5d6676); --v-line: var(--line, #dde1e8);
+      --v-code: var(--bg, #f6f7f9); --v-k: var(--rep, #1d5fa8); --v-s: var(--fixed, #1f7a4a);
+      --v-n: var(--prog, #93600a); --v-a: var(--open, #b4232c);
+      color: var(--v-fg); font: 14px/1.55 "IBM Plex Sans", system-ui, sans-serif; }
+    @media (prefers-color-scheme: dark) { .viewer { --v-fg: var(--fg, #e4e8ee); --v-muted: var(--muted, #98a1b0);
+      --v-line: var(--line, #2b3340); --v-code: var(--bg, #1a2029); --v-k: var(--rep, #8cb8f0);
+      --v-s: var(--fixed, #6fd19c); --v-n: var(--prog, #e7b660); --v-a: var(--open, #f2858b); } }
+    .viewer pre { margin: 0 0 12px; padding: 10px; border: 1px solid var(--v-line); border-radius: 6px;
+      background: var(--v-code); overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere;
+      font: 12.5px/1.5 "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .viewer .md { max-width: 80ch; }
+    .viewer .md > :first-child { margin-top: 0; }
+    .viewer .md h1 { font-size: 1.45em; } .viewer .md h2 { font-size: 1.2em; border-bottom: 1px solid var(--v-line); padding-bottom: 4px; }
+    .viewer .md h3 { font-size: 1.05em; }
+    .viewer .md table { border-collapse: collapse; margin: 0 0 12px; font-size: 13.5px; display: block; overflow-x: auto; }
+    .viewer .md th, .viewer .md td { border: 1px solid var(--v-line); padding: 4px 8px; text-align: left; vertical-align: top; }
+    .viewer .md code { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; font-size: .9em;
+      background: var(--v-code); padding: 0 3px; border-radius: 3px; }
+    .viewer .md pre code { background: none; padding: 0; font-size: inherit; }
+    .viewer .md blockquote { margin: 0 0 12px; padding-left: 12px; border-left: 3px solid var(--v-line); color: var(--v-muted); }
+    .viewer .md a { color: inherit; }
+    .viewer .hljs-keyword, .viewer .hljs-literal, .viewer .hljs-built_in, .viewer .hljs-selector-tag { color: var(--v-k); }
+    .viewer .hljs-string, .viewer .hljs-regexp, .viewer .hljs-symbol { color: var(--v-s); }
+    .viewer .hljs-number, .viewer .hljs-meta { color: var(--v-n); }
+    .viewer .hljs-comment, .viewer .hljs-quote { color: var(--v-muted); font-style: italic; }
+    .viewer .hljs-title, .viewer .hljs-type, .viewer .hljs-section { color: var(--v-k); font-weight: 600; }
+    .viewer .hljs-attr, .viewer .hljs-attribute, .viewer .hljs-name, .viewer .hljs-tag, .viewer .hljs-property,
+      .viewer .hljs-variable { color: var(--v-a); }
+    body.viewer-tab { margin: 16px; background: #fff; }
+    @media (prefers-color-scheme: dark) { body.viewer-tab { background: #12161d; } }`;
+  const viewerStyle = document.createElement("style");
+  viewerStyle.textContent = VIEWER_CSS;
+  document.head.append(viewerStyle);
+
+  const scripts = {};
+  const loadScript = src => scripts[src] || (scripts[src] = new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = src;
+    s.onload = resolve;
+    s.onerror = () => { delete scripts[src]; reject(new Error("could not load " + src)); };
+    document.head.append(s);
+  }));
+
+  // Returns the rendered file as a node of doc, which may be the new tab's document.
+  function renderText(doc, path, text) {
+    const ext = ((path.split("/").pop().match(/\.([^.]+)$/) || [])[1] || "").toLowerCase();
+    const wrap = doc.createElement("div");
+    wrap.className = "viewer";
+    const pre = doc.createElement("pre");
+    pre.textContent = text;
+    wrap.append(pre);
+    const needed = ext === "md" ? [LIBS.marked, LIBS.purify, LIBS.hljs] : [LIBS.hljs];
+    return Promise.all(needed.map(loadScript)).then(() => {
+      const hljs = window.hljs;
+      const highlight = code => {
+        const lang = (code.className.match(/language-([\w-]+)/) || [])[1];
+        if (lang && hljs.getLanguage(lang)) {
+          code.innerHTML = hljs.highlight(code.textContent, { language: lang, ignoreIllegals: true }).value;
+        }
+      };
+      if (ext === "md") {
+        const md = doc.createElement("div");
+        md.className = "md";
+        md.innerHTML = window.DOMPurify.sanitize(window.marked.parse(text));
+        md.querySelectorAll("pre code").forEach(highlight);
+        md.querySelectorAll("a[href]").forEach(a => {
+          if (/^https:\/\//i.test(a.getAttribute("href"))) { a.target = "_blank"; a.rel = "noopener"; }
+          else a.removeAttribute("href");
+        });
+        wrap.replaceChildren(md);
+      } else {
+        const code = doc.createElement("code");
+        code.className = "language-" + (LANG[ext] || "plaintext");
+        code.textContent = text;
+        highlight(code);
+        pre.replaceChildren(code);
+      }
+      return wrap;
+    }).catch(() => wrap);
+  }
+
+  function viewFile(f, status) {
+    status.textContent = "";
+    fetchFile(f).then(r => r.text()).then(text => renderText(document, f.path, text)).then(node => {
+      const box = el("div", "dlg");
+      const head = el("div", "dlg-head");
+      const h = el("h2", null, f.title || f.path);
+      h.id = "dlg-title";
+      const close = el("button", "close", "\u00d7");
+      close.type = "button";
+      close.setAttribute("aria-label", "Close");
+      close.addEventListener("click", () => dlg.close());
+      head.append(h, close);
+      box.append(head, el("div", "file-path", f.path), node);
+      dlg.replaceChildren(box);
+      dlg.showModal();
+      close.focus();
+    }).catch(e => { status.textContent = "Could not load: " + e.message; });
+  }
+
+  // claude.ai refuses to serve the file's own URL in a tab of its own, so the page opens
+  // an empty tab and writes the rendered file into it. The tab is opened during the
+  // click, before the fetch, so that it is not treated as an unrequested popup.
+  function openInTab(f, status) {
+    status.textContent = "";
+    const tab = window.open("", "_blank");
+    if (!tab) {
+      status.textContent = "This view does not allow new tabs; use View or Download.";
+      return;
+    }
+    fetchFile(f).then(r => r.text()).then(text => renderText(tab.document, f.path, text)).then(node => {
+      const doc = tab.document;
+      doc.title = f.title || f.path;
+      const style = doc.createElement("style");
+      style.textContent = VIEWER_CSS;
+      doc.head.append(style);
+      doc.body.className = "viewer-tab";
+      doc.body.replaceChildren(node);
+    }).catch(e => {
+      try { tab.close(); } catch (ignored) { /* the tab may already be gone */ }
+      status.textContent = "Could not open in a new tab here (" + (e && e.message || "blocked") + "); use View or Download.";
+    });
+  }
+
+  function downloadFile(f, status) {
+    status.textContent = "";
+    downloadsReady.then(api => {
+      if (!api) throw { code: "unavailable" };
+      const name = f.path.split("/").pop();
+      // Text files of other types (such as .java) are saved with .txt appended.
+      const filename = SAVE_AS_IS.test(name) ? name : name + ".txt";
+      return fetchFile(f).then(r => r.blob()).then(data => api.save({ filename, data }));
+    }).then(result => {
+      if (result && result.status === "saved") status.textContent = "Saved.";
+    }).catch(e => {
+      const code = e && e.code;
+      if (code === "declined") return;
+      status.textContent = code === "rate_limited" ? "Another save is open; try again shortly."
+        : code ? "Download unavailable here (" + code + ")." : "Could not load: " + (e && e.message);
+    });
+  }
 
   // A click copies the prompt. Where the clipboard is refused, a popup shows the
   // prompt selected, ready to copy by hand.

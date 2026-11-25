@@ -2,7 +2,8 @@
 """Checks a review tracker's issues.json and context.json.
 
 Checks the schema, that every location exists at the reviewed commit, that every
-location's link is current, and that the index in context.json matches the issues.
+location's link is current, that the index in context.json matches the issues, and
+that every file listed in context.json "attachments" is in the tracker folder.
 Exits non-zero and lists the problems if any check fails.
 
     validate-issues.py <issues.json> [--context <context.json>] [--repo <path>] [--link]
@@ -52,7 +53,7 @@ def main() -> int:
     context_path = args.context or os.path.join(os.path.dirname(args.issues) or ".", "context.json")
     if os.path.exists(context_path):
         with open(context_path, encoding="utf-8") as f:
-            problems += check_context(json.load(f), review)
+            problems += check_context(json.load(f), review, os.path.dirname(context_path) or ".")
     else:
         problems.append(f"{context_path} not found")
 
@@ -171,7 +172,7 @@ def _diff_lines(repo: str, base: str | None, head: str) -> dict[str, set[int]]:
     return shown
 
 
-def check_context(context: dict, review: dict) -> list[str]:
+def check_context(context: dict, review: dict, folder: str) -> list[str]:
     problems = [f"context.json: missing field {key!r}" for key in CONTEXT_REQUIRED if key not in context]
     if problems:
         return problems
@@ -198,6 +199,13 @@ def check_context(context: dict, review: dict) -> list[str]:
         for n in item.get("issues", []):
             if n not in issues:
                 problems.append(f"context.json: waiting item {i} names issue {n}, which issues.json does not have")
+    for i, item in enumerate(context.get("attachments", [])):
+        path = item.get("path") if isinstance(item, dict) else None
+        # The page refuses the same shapes: a URL, an absolute path or a parent step.
+        if not isinstance(path, str) or not path or re.match(r"^[a-z]+:|^/", path, re.I) or ".." in path:
+            problems.append(f"context.json: attachment {i} needs a relative 'path' inside the tracker")
+        elif not os.path.isfile(os.path.join(folder, path)):
+            problems.append(f"context.json: attachment {path} is not in the tracker folder; read it back or remove the entry")
     return problems
 
 
