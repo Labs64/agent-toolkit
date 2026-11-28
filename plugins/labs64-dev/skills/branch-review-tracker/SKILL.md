@@ -173,7 +173,8 @@ Run a round when the user says the branch was updated, or asks for a re-review.
    - code paths that the change reaches without touching them, such as callers,
      other endpoints, older clients and the import side of an export;
    - behaviour the change alters for requests it did not target.
-   Add each problem as a new issue, and note the fix that caused it on both issues.
+   Add each problem as a new issue that names the fix causing it. The fixed issue
+   gets one clause in its `note`, such as "import order split out as #14".
    Run "The prose review" on the net change.
 6. **Re-evaluate every issue that is not fixed** against the new code, and look
    again at the fixed ones whose code changed.
@@ -182,8 +183,9 @@ Run a round when the user says the branch was updated, or asks for a re-review.
    - Set `reviewed` to the new tip.
    - Rewrite `commits` to the new hashes. A rewritten commit gets its new hash; a
      dropped one leaves the map; a new one is added.
-   - Change `status`, `commit`, `commitRole`, `note`, `fix` and `detail` of the
-     issues that changed.
+   - Rewrite `status`, `commit`, `commitRole`, `note`, `fix`, `detail` and
+     `verified` of the issues that changed to their current state, as "Keeping
+     issues lean" asks. The round's history goes into `log`, not into the issue.
    - Re-find every location's line at the new tip with `git grep -n`. Do not shift
      lines by arithmetic.
    - Append new issues with the next free number. Never renumber.
@@ -253,9 +255,10 @@ and its instructions, not from this skill.
 3. **Write the test so that it asserts the correct behaviour.** A failure then
    reproduces the issue, and the same test becomes the regression test for the fix.
    Drive the real classes along the path, and stub only what the scenario needs.
-   Make each stub mirror what the real code does, and name every stubbed or
-   unexercised layer in `verified`, such as HTTP, the security chain or the
-   database.
+   Make each stub mirror what the real code does. List every stubbed or
+   unexercised layer, such as HTTP, the security chain or the database, in the
+   test's header comment; `verified` names the test and the layer that limits the
+   result most.
 4. **Run the narrowest set:** the new test, plus the tests that cover the changed
    code.
 5. **Keep the test source in the tracker.** The scratchpad can be wiped between
@@ -323,7 +326,8 @@ Update the tracker with every change in the state of the review, not only at the
 end of a round: a verdict, a dismissal, a reopening, a posted comment, a created
 ticket, a reported data-check result. In one step:
 
-1. Change the issue in `issues.json`.
+1. Rewrite the issue in `issues.json` to its current state, as "Keeping issues
+   lean" below asks. Do not append to its fields.
 2. Update `context.json`: its index entry, `waiting`, and any section the change
    affects.
 3. Append a line to `log` in `issues.json`, with the UTC time and what happened.
@@ -432,7 +436,8 @@ Every issue has:
   `url` is written by the validator's `--link`, never by hand: for a GitHub PR, a
   line the "Files changed" tab shows links there, and any other line links to the
   file at `reviewed`. Without a GitHub PR, locations have no link;
-- `detail[]`: paragraphs, written as the "Wording" section below asks;
+- `detail[]`: one or two paragraphs, written as "Keeping issues lean" and
+  "Wording" below ask;
 - `verified`: how the issue, or its fix, was verified, and what was not.
 
 It may also have:
@@ -495,8 +500,38 @@ comment in `posted`, and the tag follows.
 
 `detail`, `fix`, `verified` and drafts are technical text: the wording rules of the
 workspace and repository instructions apply. Say what the code does and what goes
-wrong. Give a timeline for a race or a timeout. Write each paragraph so that it
-stands alone.
+wrong. Give a timeline for a race or a timeout.
+
+## Keeping issues lean
+
+An issue's fields describe the issue as it is now. What happened to it, such as a
+round, a decision, a posted comment or a finding that relates it to another issue,
+goes into `log`, `posted`, `dismissal` or the Open decisions in `context.json`.
+Without this rule an issue grows with every round and its text goes stale. An
+appended paragraph keeps saying "blocker" after the fix has landed.
+
+- **Rewrite, never append.** On every change, rewrite the fields to the current
+  state and drop what no longer holds. Write a new paragraph only for a new fact
+  about the defect itself.
+- **Say each fact once.** The requirement goes in `detail`, and the fix in `fix`.
+  `note` does not repeat the status, and `verified` does not repeat `fix`.
+- **Refer to other issues in one clause**, such as "see #11"; their argument stays
+  in their own issue.
+- **Keep to these lengths** (`validate-issues.py` rejects text over its upper
+  bounds):
+
+  | Field | Target |
+  |---|---|
+  | `detail` | at most two paragraphs, about 120 words: the defect, how it is triggered, what it breaks; for an open issue, one sentence of suggested fix |
+  | `fix.what`, `fix.behavior` | about 40 words each |
+  | `verified` | about 50 words: how the current state was checked, and the test that reproduced it |
+  | `note` | one line |
+  | `locations` | the places a reader needs now; for a fixed issue, the defect and the fix, about three |
+
+- **Once the fix lands, drop the suggested fix and the attack narrative** that only
+  argued for fixing it. What the fix does goes into `fix`.
+- **Long material belongs in an attachment**, such as a write-up in `docs/` or a
+  test in `tests/`, and the issue names it.
 
 ## Closing
 
