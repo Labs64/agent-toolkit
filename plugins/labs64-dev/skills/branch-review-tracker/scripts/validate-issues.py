@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Checks a review tracker's issues.json and context.json.
 
-Checks the schema, that every location exists at the reviewed commit, that every
+Checks the schema, that each issue's text stays within the length limits, that
+every location exists at the reviewed commit, that every
 location's link is current, that the index in context.json matches the issues, and
 that every file listed in context.json "attachments" is in the tracker folder.
 Exits non-zero and lists the problems if any check fails.
@@ -96,6 +97,7 @@ def check(review: dict, repo: str) -> list[str]:
             problems.append(f"{label}: commit {commit} is not in 'commits'")
         if not issue.get("detail"):
             problems.append(f"{label}: empty 'detail'")
+        problems += [f"{label}: {p}" for p in _length_problems(issue)]
         for location in issue.get("locations", []):
             path, line = location.get("path"), location.get("line")
             if not path or not isinstance(line, int):
@@ -115,6 +117,33 @@ def check(review: dict, repo: str) -> list[str]:
     for i, entry in enumerate(review["log"]):
         if not _has(entry, "at", "text"):
             problems.append(f"log entry {i}: needs 'at' and 'text'")
+    return problems
+
+
+# Upper bounds for an issue's text, in words. The fields describe the issue as it is
+# now; its history goes into the log. "Keeping issues lean" in SKILL.md gives the
+# targets, which are lower.
+MAX_DETAIL_PARAGRAPHS = 2
+MAX_WORDS = {"detail": 150, "fix.what": 50, "fix.behavior": 50, "verified": 60, "note": 20}
+
+
+def _length_problems(issue: dict) -> list[str]:
+    detail = issue.get("detail") or []
+    fix = issue.get("fix") or {}
+    texts = {
+        "detail": " ".join(detail),
+        "fix.what": fix.get("what") or "",
+        "fix.behavior": fix.get("behavior") or "",
+        "verified": issue.get("verified") or "",
+        "note": issue.get("note") or "",
+    }
+    problems = []
+    if len(detail) > MAX_DETAIL_PARAGRAPHS:
+        problems.append(f"'detail' has {len(detail)} paragraphs, at most {MAX_DETAIL_PARAGRAPHS}")
+    for field, text in texts.items():
+        words = len(text.split())
+        if words > MAX_WORDS[field]:
+            problems.append(f"{field!r} has {words} words, at most {MAX_WORDS[field]}; rewrite it to the current state")
     return problems
 
 
